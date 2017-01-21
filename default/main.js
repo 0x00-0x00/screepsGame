@@ -23,27 +23,28 @@ module.exports.loop = function () {
     var num_creeps = 0
     WORKERS_LIST = [];
     for(var name in Game.creeps) {
-        WORKERS_LIST += name;
+        WORKERS_LIST[num_creeps] = name;
         num_creeps++;
     }
 
-    TOTAL_WORKERS = 3;
-    HARVESTER_LIST = ['Harvester1', 'Harvester2'];
-    UPGRADER_LIST = ['Upgrader1'];
-    TOTAL_WORKERS_LIST = union_arrays(HARVESTER_LIST, UPGRADER_LIST);
+    HARVESTER_LIST = ["Harvester1", "Harvester2"];
+    UPGRADER_LIST = ["Upgrader1", "Upgrader2"];
 
+    TOTAL_WORKERS_LIST = HARVESTER_LIST.concat(UPGRADER_LIST);
+    TOTAL_WORKERS = TOTAL_WORKERS_LIST.length;
+    console.log("Total workers on the system: " + TOTAL_WORKERS);
+    console.log("Total workers registered under your command: " + WORKERS_LIST.length);
 
     /** Checks the difference and spawn it **/
     if(num_creeps < TOTAL_WORKERS) {
-        var diff = TOTAL_WORKERS - workers;
+        var diff = TOTAL_WORKERS - WORKERS_LIST.length;
         var set_diff = TOTAL_WORKERS_LIST.filter(function(x) { return WORKERS_LIST.indexOf(x) < 0})
-        console.log("Diff: " + diff + " workers: " + workers + "");
         console.log("It is missing " + diff + " workers from your reign. This is inadmissible.");
         for(var deserter in set_diff) {
 
             /** Declare the deserter name **/
-            deserter = TOTAL_WORKERS_LIST[deserter];
-
+            deserter = set_diff[deserter];
+            console.log("The deserter is: " + deserter);
             /** Checks its caste and spawn it. **/
 
             if(HARVESTER_LIST.includes(deserter)) {
@@ -63,10 +64,12 @@ module.exports.loop = function () {
         var creep = Game.creeps[name];
 
         if(~name.indexOf("Harvester")) {
+            console.log("Harvester " + name + " is working.");
             roleHarvester.run(creep);
         }
 
         if(~name.indexOf("Upgrader")) {
+            console.log("Upgrader "+ name + " is working.");
             roleUpgrader.run(creep);
         }
     }
