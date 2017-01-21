@@ -1,20 +1,7 @@
 var roleHarvester = require('role.harvester');
 var roleUpgrader = require('role.upgrader');
+var roleAssist = require('role.assist');
 
-/** Function to unite two sets **/
-function union_arrays (x, y) {
-    var obj = {};
-    for (var i = x.length-1; i >= 0; -- i)
-        obj[x[i]] = x[i];
-    for (var i = y.length-1; i >= 0; -- i)
-        obj[y[i]] = y[i];
-    var res = []
-    for (var k in obj) {
-        if (obj.hasOwnProperty(k))  // <-- optional
-            res.push(obj[k]);
-    }
-    return res;
-}
 
 
 module.exports.loop = function () {
@@ -27,11 +14,21 @@ module.exports.loop = function () {
         num_creeps++;
     }
 
-    HARVESTER_LIST = ["Harvester1", "Harvester2"];
-    UPGRADER_LIST = ["Upgrader1", "Upgrader2", "Upgrader3"];
+
+    SPAWN_POINT = Game.spawns["Spawn1"];
+
+    UPGRADER_LIST = [];
+    HARVESTER_LIST = ["Harvester1", "Harvester2", "Harvester3"];
+
+    /** Upgraders Generation **/
+    for(var i=0; i < 10; i++)
+    {
+        UPGRADER_LIST[i] = "Upgrader" + i;
+    }
 
     TOTAL_WORKERS_LIST = HARVESTER_LIST.concat(UPGRADER_LIST);
     TOTAL_WORKERS = TOTAL_WORKERS_LIST.length;
+
     console.log("#######################################################################")
     console.log("Total workers on the system: " + TOTAL_WORKERS);
     console.log("Total workers registered under your command: " + WORKERS_LIST.length);
@@ -45,15 +42,34 @@ module.exports.loop = function () {
 
             /** Declare the deserter name **/
             deserter = set_diff[deserter];
-            console.log("The deserter is: " + deserter);
-            /** Checks its caste and spawn it. **/
 
+            /** Checks its caste and spawn it. **/
             if(HARVESTER_LIST.includes(deserter)) {
-                Game.spawns['Spawn1'].createCreep([WORK, MOVE, CARRY], deserter);
+                var parts = [WORK, MOVE, CARRY, CARRY];
+                var cost = roleAssist.calculate_creep_cost(parts);
+
+                if(cost < SPAWN_POINT.energy ) {
+                    console.log("[+] Spawning a new harvester named " + deserter + ".");
+                    Game.spawns['Spawn1'].createCreep(parts, deserter);
+                } else {
+                    console.log("Cost to spawn a Harvester: " + cost);
+                    console.log("[!] Not enough energy to spawn " + deserter + ".");
+                }
+
             }
 
             if(UPGRADER_LIST.includes(deserter)) {
-                Game.spawns['Spawn1'].createCreep([WORK, MOVE, CARRY], deserter);
+                var parts = [WORK, MOVE, MOVE, CARRY];
+                var cost = roleAssist.calculate_creep_cost(parts);
+
+                if(cost < SPAWN_POINT.energy) {
+                    console.log("[+] Spawning a new upgrader named " + deserter + ".");
+                    Game.spawns['Spawn1'].createCreep(parts, deserter);
+                } else {
+                    console.log("Cost to spawn a Upgrader: " + cost);
+                    console.log("[!] Not enough energy to spawn " + deserter + ".");
+                }
+
             }
         }
     } else {

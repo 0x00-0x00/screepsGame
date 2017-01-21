@@ -3,7 +3,16 @@ var roleUpgrader = {
     /** @param {Creep} creep **/
     run: function (creep)
     {
-        if( creep.carry.energy == 0 ) {
+        /** Define a working state **/
+        if(creep.memory.working && creep.carry.energy == 0) {
+            creep.memory.working = false;
+        }
+
+        if(!creep.memory.working && creep.carry.energy == creep.carry.carryCapacity) {
+            creep.memory.working = true;
+        }
+
+        if( !creep.memory.working ) {
 
             /** Gets all sources from ROOM and creates a set for distances **/
             var sources = creep.room.find(FIND_SOURCES);
