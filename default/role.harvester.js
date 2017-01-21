@@ -7,6 +7,16 @@ Array.min = function ( array ) {
     return Math.min.apply(Math, array );
 }
 
+var check_good_source = function( energy, capacity )
+{
+    var tenth_share = capacity / 10;
+    if (energy < tenth_share) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
 var roleHarvester = {
   /** @param {Creep} creep **/
 
@@ -25,8 +35,17 @@ var roleHarvester = {
           /** Calculate all the distances **/
           for(var x in sources) {
               var target = sources[x];
-              var range = creep.pos.getRangeTo(target);
-              distance[x] = range;
+
+              var energy_amount = target.energy;
+              var source_condition = check_good_source(energy_amount, 3000);
+              if(source_condition != 0) {
+                  var range = creep.pos.getRangeTo(target);
+                  distance[x] = range;
+              } else {
+                  /** Spoil this source **/
+                  distance[x] = 9999999999;
+              }
+
           }
 
           /** Identify the quickest source available **/

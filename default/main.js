@@ -28,10 +28,11 @@ module.exports.loop = function () {
     }
 
     HARVESTER_LIST = ["Harvester1", "Harvester2"];
-    UPGRADER_LIST = ["Upgrader1", "Upgrader2"];
+    UPGRADER_LIST = ["Upgrader1", "Upgrader2", "Upgrader3"];
 
     TOTAL_WORKERS_LIST = HARVESTER_LIST.concat(UPGRADER_LIST);
     TOTAL_WORKERS = TOTAL_WORKERS_LIST.length;
+    console.log("#######################################################################")
     console.log("Total workers on the system: " + TOTAL_WORKERS);
     console.log("Total workers registered under your command: " + WORKERS_LIST.length);
 
@@ -64,12 +65,10 @@ module.exports.loop = function () {
         var creep = Game.creeps[name];
 
         if(~name.indexOf("Harvester")) {
-            console.log("Harvester " + name + " is working.");
             roleHarvester.run(creep);
         }
 
         if(~name.indexOf("Upgrader")) {
-            console.log("Upgrader "+ name + " is working.");
             roleUpgrader.run(creep);
         }
     }

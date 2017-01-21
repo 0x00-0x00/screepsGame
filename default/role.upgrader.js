@@ -3,7 +3,7 @@ var roleUpgrader = {
     /** @param {Creep} creep **/
     run: function (creep)
     {
-        if(creep.carry.energy < creep.carryCapacity) {
+        if( creep.carry.energy == 0 ) {
 
             /** Gets all sources from ROOM and creates a set for distances **/
             var sources = creep.room.find(FIND_SOURCES);
@@ -35,7 +35,9 @@ var roleUpgrader = {
             var target = creep.room.controller;
             if(creep.upgradeController(target) == ERR_NOT_IN_RANGE) {
                 creep.moveTo(target);
+
             }
+
         }
     }
 
