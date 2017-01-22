@@ -1,3 +1,22 @@
+/** @param {Source} active sources**/
+var quickestRoute = function(creep, sources)
+{
+    /** If only one source, go to it. **/
+    let num_sources = sources.length;
+    if(num_sources == 1) {
+        return sources[0];
+    }
+
+    var distance_1 = creep.pos.getRangeTo(sources[0]);
+    var distance_2 = creep.pos.getRangeTo(sources[1]);
+    if(distance_1 < distance_2) {
+        return sources[0];
+    } else {
+        return sources[1];
+    }
+}
+
+
 var roleUpgrader = {
 
     /** @param {Creep} creep **/
@@ -16,37 +35,22 @@ var roleUpgrader = {
         }
 
         if( !creep.memory.working ) {
-            /** Gets all sources from ROOM and creates a set for distances **/
-            var sources = creep.room.find(FIND_SOURCES);
-            var distance = [];
 
-            /** Calculate all the distances **/
-            for(var x in sources) {
-                var target = sources[x];
-                var range = creep.pos.getRangeTo(target);
-                distance[x] = range;
-            }
 
-            /** Identify the quickest source available **/
-            var shortest_distance = Array.min(distance);
-            for(var x in sources) {
-                var target = sources[x];
-                var range = creep.pos.getRangeTo(target);
-                if(range == shortest_distance) {
+            /** Gets all sources from ROOM **/
+            var sources = creep.room.find(FIND_SOURCES_ACTIVE);
+            var target = quickestRoute(creep, sources);
 
-                    /** Moving and harvesting code **/
-                    if(creep.harvest(target) == ERR_NOT_IN_RANGE) {
-                        creep.moveTo(target);
-                    }
-
-                }
+            /** Moving and harvesting code **/
+            if(creep.harvest(target) == ERR_NOT_IN_RANGE) {
+                creep.moveTo(target);
 
             }
+
         } else {
             var target = creep.room.controller;
             if(creep.upgradeController(target) == ERR_NOT_IN_RANGE) {
                 creep.moveTo(target);
-
             }
 
         }

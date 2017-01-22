@@ -40,6 +40,27 @@ var roleAssist = {
             }
         }
         return cost;
+    },
+
+    spawnProcedure: function(worker_list, worker_name, role, parts, spawnPoint)
+    {
+        var cost = this.calculate_creep_cost(parts);
+
+        /** Check costs **/
+        if(cost > spawnPoint.energy) {
+            var missing_energy = cost - spawnPoint.energy;
+            console.log("[!] It is missing " + missing_energy + " energy to spawn one more " + role + ".");
+            return -1;
+        }
+
+        /** Check if in lists **/
+        if(!worker_list.includes(worker_name)) {
+            return -1;
+        }
+
+        spawnPoint.createCreep(parts, worker_name);
+        console.log("[+] Spawned a " + role + " named " + worker_name);
+        return 0;
     }
 }
 

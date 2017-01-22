@@ -7,6 +7,10 @@ Array.min = function ( array ) {
     return Math.min.apply(Math, array );
 }
 
+Array.max = function( array ) {
+    return Math.max.apply(Math, array);
+}
+
 var check_good_source = function( energy, capacity )
 {
     var tenth_share = capacity / 10;
@@ -17,61 +21,160 @@ var check_good_source = function( energy, capacity )
     }
 }
 
+Source.sourcePriority = function(source) {
+    let priority;
+    if (source.ticksToRegeneration == undefined) {
+        priority = 10;
+    } else if (source.energy == 0) {
+        priority = 0;
+    } else {
+        priority = source.energy / source.ticksToRegeneration;
+    }
+    if (priority > 0 && source.ticksToRegeneration < 150) {
+        priority = priority * (1 + (150 - source.ticksToRegeneration)/250);
+        if (source.ticksToRegeneration < 70) {
+            priority = priority + (70 - source.ticksToRegeneration)/10;
+        }
+    }
+    return priority;
+};
+
+
+/** @param {Source} active sources**/
+var quickestRoute = function(creep, sources)
+{
+    /** If only one source, go to it. **/
+    let num_sources = sources.length;
+    if(num_sources == 1) {
+        return sources[0];
+    }
+
+    var distance_1 = creep.pos.getRangeTo(sources[0]);
+    var distance_2 = creep.pos.getRangeTo(sources[1]);
+    if(distance_1 < distance_2) {
+        return sources[0];
+    } else {
+        return sources[1];
+    }
+}
+
+var goTo = function(creep, target) {
+    var path = creep.pos.findPathTo(target, {maxOps: 200});
+    if(path.length) {
+        creep.move(path[0].direction);
+    }
+}
+
 var roleHarvester = {
   /** @param {Creep} creep **/
 
   run: function(creep)
   {
+      /** Defines the spawn point **/
       var spawnPoint = Game.spawns['Spawn1'];
       if(spawnPoint == undefined) {
           console.log("[!] Error @harvester.js: could not set spawn point.");
       }
-      if(creep.carry.energy < creep.carryCapacity) {
+
+      /** Define a variable to contain spawnPoint energy **/
+      var total_energy = spawnPoint.energy;
+
+
+      /** Define a working state **/
+      if(creep.memory.working && creep.carry.energy == 0) {
+          creep.memory.working = false;
+      }
+
+      if(!creep.memory.working && creep.carry.energy == creep.carryCapacity) {
+          creep.memory.working = true;
+      }
+
+
+      if(!creep.memory.working) {
+
+          /** Priority to decaying energy **/
+          var dropped = creep.room.find(FIND_DROPPED_ENERGY);
+          if(dropped.length > 0) {
+              let dropped_source = dropped[0];
+
+              creep.say("Picking");
+              if(creep.pickup(dropped_source) == ERR_NOT_IN_RANGE) {
+                creep.moveTo(dropped_source);
+              }
+
+              return 0;
+          }
 
           /** Gets all sources from ROOM and creates a set for distances **/
-          var sources = creep.room.find(FIND_SOURCES);
-          var distance = [];
+          var sources = creep.room.find(FIND_SOURCES_ACTIVE);
+          var target = quickestRoute(creep, sources);
 
-          /** Calculate all the distances **/
-          for(var x in sources) {
-              var target = sources[x];
+          /** Moving and harvesting code **/
 
-              var energy_amount = target.energy;
-              var source_condition = check_good_source(energy_amount, 3000);
-              if(source_condition != 0) {
-                  var range = creep.pos.getRangeTo(target);
-                  distance[x] = range;
-              } else {
-                  /** Spoil this source **/
-                  distance[x] = 9999999999;
-              }
-
+          if(creep.harvest(target) == ERR_NOT_IN_RANGE) {
+              goTo(creep, target);
+              creep.say("Moving");
+          } else {
+              creep.say("Harvesting");
           }
 
-          /** Identify the quickest source available **/
-          var shortest_distance = Array.min(distance);
-          for(var x in sources) {
-              var target = sources[x];
-              var range = creep.pos.getRangeTo(target);
-              if(range == shortest_distance) {
+          return 0;
 
-                  /** Moving and harvesting code **/
-                  if(creep.harvest(target) == ERR_NOT_IN_RANGE) {
-                      creep.moveTo(target);
-                  }
-
-              }
-
-          }
       } else {
 
-          /** Move and deposit energy **/
-          if(creep.transfer(spawnPoint, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-              creep.moveTo(spawnPoint);
+          /** If there are not any constructions sites **/
+          var constructs = creep.room.find(FIND_CONSTRUCTION_SITES);
+          let num_constructs = constructs.length;
+
+          if(num_constructs > 0 && total_energy == spawnPoint.energyCapacity) {
+              let target = constructs[0];
+              if(creep.pos.inRangeTo(target, 1)) {
+                  creep.build(target);
+              } else {
+                  goTo(creep, target);
+              }
+          } else {
+              /** Move and deposit energy **/
+              if(creep.transfer(spawnPoint, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                  creep.say("Returning ...")
+                  goTo(creep, spawnPoint);
+                  //creep.moveTo(target);
+              }
           }
+
+
+
+          /** To drop the energy instead of returning it. **/
+          //creep.drop(RESOURCE_ENERGY, creep.carry.energy);
+
       }
   }
 
 };
 
 module.exports = roleHarvester;
+
+/**let sources = creep.room.find(FIND_SOURCES_ACTIVE);
+
+ let target;
+ let switchSource = _.random(0, 4) == 0;
+ if(Source.sourcePriority(sources[1]) > Source.sourcePriority(sources[0])) {
+              if(switchSource) {
+                  target = sources[0];
+              } else {
+                  target = sources[1];
+              }
+          } else {
+              if(switchSource) {
+                  target = sources[1];
+              } else {
+                  target = sources[0];
+              }
+          }
+
+ if(creep.harvest(target) == ERR_NOT_IN_RANGE) {
+              creep.moveTo(target);
+              creep.say("Moving to target ...")
+          } else {
+              creep.say("Mining ...")
+          }**/
