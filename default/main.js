@@ -22,7 +22,7 @@ module.exports.loop = function () {
     HARVESTER_LIST = [];
 
     /** Harvester's generation **/
-    for(var i=0; i < 6; i++)
+    for(var i=0; i < 8; i++)
     {
         HARVESTER_LIST[i] = "Harvester" + i;
     }

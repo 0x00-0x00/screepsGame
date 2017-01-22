@@ -49,6 +49,15 @@ var quickestRoute = function(creep, sources)
         return sources[0];
     }
 
+    /** Check energy amount of sources **/
+    var full_source_01 = sources[0].energy < sources[0].energyCapacity;
+    var full_source_02 = sources[1].energy < sources[1].energyCapacity;
+
+    /** This ensures all sources are going to be harvested! **/
+    if(full_source_01 && !full_source_02) {
+        return sources[1];
+    }
+
     var distance_1 = creep.pos.getRangeTo(sources[0]);
     var distance_2 = creep.pos.getRangeTo(sources[1]);
     if(distance_1 < distance_2) {
@@ -129,6 +138,7 @@ var roleHarvester = {
           var constructs = creep.room.find(FIND_CONSTRUCTION_SITES);
           let num_constructs = constructs.length;
 
+          /** Only build when spawnPoint is full of energy **/
           if(num_constructs > 0 && total_energy == spawnPoint.energyCapacity) {
               let target = constructs[0];
               if(creep.pos.inRangeTo(target, 1)) {
