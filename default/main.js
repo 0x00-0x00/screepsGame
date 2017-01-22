@@ -61,7 +61,7 @@ module.exports.loop = function () {
                  * **/
 
 
-                if(roleAssist.spawnProcedure(HARVESTER_LIST, deserter, "harvester", [WORK, MOVE, MOVE, MOVE, CARRY], SPAWN_POINT) == 0) {
+                if(roleAssist.spawnProcedure(HARVESTER_LIST, deserter, "harvester", [WORK, WORK, MOVE, CARRY], SPAWN_POINT) == 0) {
                     break;
                 }
 

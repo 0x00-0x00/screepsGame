@@ -7,8 +7,25 @@ var quickestRoute = function(creep, sources)
         return sources[0];
     }
 
+    /** Check distances **/
     var distance_1 = creep.pos.getRangeTo(sources[0]);
     var distance_2 = creep.pos.getRangeTo(sources[1]);
+
+    /** Check energy amount of sources **/
+    var full_source_01 = sources[0].energy < sources[0].energyCapacity;
+    var full_source_02 = sources[1].energy < sources[1].energyCapacity;
+
+    /** This ensures all sources are going to be harvested! **/
+    if(full_source_01 && !full_source_02) {
+        return sources[1];
+    }
+
+    /** Choose another energy source to balance consumption of energy resources **/
+    if(sources[1].energy > sources[0].energy && distance_1 != 1) {
+        return sources[1];
+    }
+
+
     if(distance_1 < distance_2) {
         return sources[0];
     } else {

@@ -11,35 +11,6 @@ Array.max = function( array ) {
     return Math.max.apply(Math, array);
 }
 
-var check_good_source = function( energy, capacity )
-{
-    var tenth_share = capacity / 10;
-    if (energy < tenth_share) {
-        return 0;
-    } else {
-        return 1;
-    }
-}
-
-Source.sourcePriority = function(source) {
-    let priority;
-    if (source.ticksToRegeneration == undefined) {
-        priority = 10;
-    } else if (source.energy == 0) {
-        priority = 0;
-    } else {
-        priority = source.energy / source.ticksToRegeneration;
-    }
-    if (priority > 0 && source.ticksToRegeneration < 150) {
-        priority = priority * (1 + (150 - source.ticksToRegeneration)/250);
-        if (source.ticksToRegeneration < 70) {
-            priority = priority + (70 - source.ticksToRegeneration)/10;
-        }
-    }
-    return priority;
-};
-
-
 /** @param {Source} active sources**/
 var quickestRoute = function(creep, sources)
 {
@@ -48,6 +19,10 @@ var quickestRoute = function(creep, sources)
     if(num_sources == 1) {
         return sources[0];
     }
+
+    /** Check distances **/
+    var distance_1 = creep.pos.getRangeTo(sources[0]);
+    var distance_2 = creep.pos.getRangeTo(sources[1]);
 
     /** Check energy amount of sources **/
     var full_source_01 = sources[0].energy < sources[0].energyCapacity;
@@ -58,8 +33,12 @@ var quickestRoute = function(creep, sources)
         return sources[1];
     }
 
-    var distance_1 = creep.pos.getRangeTo(sources[0]);
-    var distance_2 = creep.pos.getRangeTo(sources[1]);
+    /** Choose another energy source to balance consumption of energy resources **/
+    if(sources[1].energy > sources[0].energy && distance_1 != 1) {
+        return sources[1];
+    }
+
+
     if(distance_1 < distance_2) {
         return sources[0];
     } else {
