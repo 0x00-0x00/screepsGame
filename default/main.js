@@ -6,6 +6,7 @@ var roleAssist = require('role.assist');
 
 module.exports.loop = function () {
 
+
     /** Count creeps **/
     var num_creeps = 0
     WORKERS_LIST = [];
@@ -18,10 +19,10 @@ module.exports.loop = function () {
     SPAWN_POINT = Game.spawns["Spawn1"];
 
     UPGRADER_LIST = [];
-    HARVESTER_LIST = ["Harvester1", "Harvester2", "Harvester3"];
+    HARVESTER_LIST = ["Harvester1", "Harvester2", "Harvester3", "Harvester4"];
 
     /** Upgraders Generation **/
-    for(var i=0; i < 10; i++)
+    for(var i=0; i < 15; i++)
     {
         UPGRADER_LIST[i] = "Upgrader" + i;
     }
