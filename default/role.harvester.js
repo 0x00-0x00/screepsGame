@@ -92,9 +92,15 @@ var roleHarvester = {
 
       if(!creep.memory.working) {
 
-          /** Priority to decaying energy **/
+          /** Gets all sources from ROOM **/
+          var sources = creep.room.find(FIND_SOURCES_ACTIVE);
+          var target = quickestRoute(creep, sources);
+
+          /** Priority to NEAR decaying energy **/
           var dropped = creep.room.find(FIND_DROPPED_ENERGY);
-          if(dropped.length > 0) {
+          var dropped_isNear = (creep.pos.getRangeTo(dropped[0]) < creep.pos.getRangeTo(target))
+
+          if(dropped.length > 0  && dropped_isNear) {
               let dropped_source = dropped[0];
 
               creep.say("Picking");
@@ -105,9 +111,6 @@ var roleHarvester = {
               return 0;
           }
 
-          /** Gets all sources from ROOM and creates a set for distances **/
-          var sources = creep.room.find(FIND_SOURCES_ACTIVE);
-          var target = quickestRoute(creep, sources);
 
           /** Moving and harvesting code **/
 
