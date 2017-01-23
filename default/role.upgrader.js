@@ -31,17 +31,62 @@ var quickestRoute = function(creep, sources)
     } else {
         return sources[1];
     }
-}
+};
+
+let retrieveEnergyFromContainer = function(creep) {
+    let container = creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
+        filter: (s) => s.structureType == STRUCTURE_CONTAINER && s.store[RESOURCE_ENERGY] > 0
+    });
+
+    /** If there arent containers or are empty  **/
+    if(container == null) {
+        return false;
+    }
+
+    if(creep.withdraw(container) == ERR_NOT_IN_RANGE) {
+        creep.moveTo(container);
+    }
+
+    return true;
+
+};
+
 
 
 var roleUpgrader = {
+
+    parts: [WORK, MOVE, MOVE, CARRY, CARRY],
+
+    getEnergy: function() {
+        /** Priority 1: Dropped energy because it decay **/
+        let droppedEnergy = this.creep.room.find(FIND_DROPPED_ENERGY);
+        if(droppedEnergy.length > 0) {
+            let nearest = this.creep.pos.findClosestByPath(droppedEnergy);
+            if(this.creep.pickup(nearest) == ERR_NOT_IN_RANGE) {
+                this.creep.moveTo(nearest);
+            }
+            return true;
+        }
+
+        /** Priority 2: Container storage because it is free. **/
+        retrieveEnergyFromContainer(this.creep);
+
+        /** Priority 3: Energy sources **/
+        let energySources = this.creep.room.find(FIND_SOURCES_ACTIVE);
+        let nearest = this.creep.pos.findClosestByPath(energySources);
+        if(this.creep.harvest(nearest) == ERR_NOT_IN_RANGE) {
+            this.creep.moveTo(nearest);
+        }
+
+
+    },
 
     /** @param {Creep} creep **/
     run: function (creep)
     {
 
         /** carryCapacity => Units able to move by the Creep **/
-
+        this.creep = creep;
         /** Define a working state **/
         if(creep.memory.working && creep.carry.energy == 0) {
             creep.memory.working = false;
@@ -52,18 +97,7 @@ var roleUpgrader = {
         }
 
         if( !creep.memory.working ) {
-
-
-            /** Gets all sources from ROOM **/
-            var sources = creep.room.find(FIND_SOURCES_ACTIVE);
-            var target = quickestRoute(creep, sources);
-
-            /** Moving and harvesting code **/
-            if(creep.harvest(target) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(target);
-
-            }
-
+            this.getEnergy();
         } else {
             var target = creep.room.controller;
             if(creep.upgradeController(target) == ERR_NOT_IN_RANGE) {

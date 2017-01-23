@@ -57,7 +57,7 @@ var roleAssist = {
 
         /** Check costs **/
         if(cost > total_energy) {
-            var missing_energy = cost - spawnPoint.energy;
+            var missing_energy = cost - total_energy;
             console.log("[!] It is missing " + missing_energy + " energy to spawn one more " + role + ".");
             return -1;
         }
@@ -68,6 +68,7 @@ var roleAssist = {
         }
 
         spawnPoint.createCreep(parts, worker_name);
+        Game.creeps[worker_name].memory.role = role;
         console.log("[+] Spawned a " + role + " named " + worker_name);
         return 0;
     }

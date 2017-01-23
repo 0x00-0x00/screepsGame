@@ -14,6 +14,10 @@ Array.max = function( array ) {
 let depositEnergy = function(creep)
 {
   let structs = creep.room.find(FIND_MY_STRUCTURES);
+  let container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+      filter: (s) => s.structureType == STRUCTURE_CONTAINER && s.store[RESOURCE_ENERGY] < s.storeCapacity
+  });
+
   for(let x in structs) {
       let structure = structs[x];
       if(structure.energyCapacity > structure.energy) {
@@ -23,6 +27,57 @@ let depositEnergy = function(creep)
           return true;
       }
   }
+  if(container == null) {
+      console.log("No container.");
+  } else {
+      console.log("Transferring to container.")
+      if(creep.transfer(container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+          creep.moveTo(container);
+      }
+  }
+
+
+
+};
+
+let retrieveEnergyFromContainer = function(creep) {
+    let container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s) => s.structureType == STRUCTURE_CONTAINER && s.store[RESOURCE_ENERGY] > 0
+    });
+
+    /** If there arent containers or are empty  **/
+    if(container == null) {
+        return false;
+    }
+
+    if(creep.withdraw(container) == ERR_NOT_IN_RANGE) {
+        creep.moveTo(container);
+    }
+
+    return true;
+
+};
+
+/** Function to deposit energy into empty extensions
+ * Returns true if going to or transferred energy
+ * Returns false if all are full
+ * @param creep Object
+ * **/
+let depositIntoExtension = function(creep) {
+  let extensions = creep.room.find(FIND_MY_STRUCTURES, {
+      filter: { structureType: STRUCTURE_EXTENSION }
+    });
+
+  for(let i in extensions) {
+      let extension = extensions[i];
+      if(extension.energy < extension.energyCapacity) {
+          if(creep.transfer(extesion, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+              creep.moveTo(extension);
+          }
+          return true;
+      }
+  }
+  return false;
 };
 
 let buildConstructions = function(creep, totalEnergy, minimumCost) {
@@ -119,18 +174,10 @@ var roleHarvester = {
      * @param totalEnergy Integer
      * @param minimumCost Integer
      */
+    parts: [WORK, WORK, MOVE, MOVE, CARRY, CARRY],
 
-  run: function(creep, totalEnergy, minimumCost)
-  {
-      /** Defines the spawn point **/
-      var spawnPoint = Game.spawns['Spawn1'];
-      if(spawnPoint == undefined) {
-          console.log("[!] Error @harvester.js: could not set spawn point.");
-      }
-
-      /** Define a variable to contain spawnPoint energy **/
-      let total_energy = totalEnergy;
-
+    run: function(creep, totalEnergy, minimumCost)
+    {
 
       /** Define a working state **/
       if(creep.memory.working && creep.carry.energy == 0) {
@@ -144,6 +191,12 @@ var roleHarvester = {
 
       if(!creep.memory.working) {
 
+          /** This ensures survival of Harvesters using stored energy into spawning **/
+          if(totalEnergy < minimumCost) {
+              if(!retrieveEnergyFromContainer(creep)) {
+                  console.log("[!] Containers are empty.");
+              }
+          }
           /** Gets all sources from ROOM **/
           let sources = creep.room.find(FIND_SOURCES_ACTIVE);
           let target = quickestRoute(creep, sources);
@@ -200,7 +253,7 @@ var roleHarvester = {
           //creep.drop(RESOURCE_ENERGY, creep.carry.energy);
 
       }
-  }
+    }
 
 };
 

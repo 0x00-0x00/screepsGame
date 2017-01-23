@@ -52,9 +52,52 @@ var repairProcedure(creep) {
 
 var roleBuilder = {
 
+    getEnergy: function() {
+      let container = this.creep.pos.findClosestByPath(FIND_STRUCTURES, {
+          filter: (s) => s.structureType == STRUCTURE_CONTAINER && s.store[RESOURCE_ENERGY] > 0
+      });
+
+      if(this.creep.withdraw(container) == ERR_NOT_IN_RANGE) {
+          this.creep.moveTo(container);
+      }
+
+    },
+
+    repair: function() {
+        let my_structures = this.creep.room.find(FIND_MY_STRUCTURES);
+        let structures = this.creep.room.find(FIND_STRUCTURES);
+        let repair_strutures = my_structures.concat(structures);
+
+        for(let i in repair_strutures) {
+            let repair_struct = repair_strutures[i];
+            if(checkRepair(repair_struct)) {
+                if(this.creep.repair(repair_struct) == ERR_NOT_IN_RANGE) {
+                    this.creep.moveTo(repair_struct);
+                }
+                return true;
+            }
+        }
+        return false;
+
+    },
+
+    build: function() {
+      let construction_sites = this.creep.room.find(FIND_CONSTRUCTION_SITES);
+      if(construction_sites.length > 0) {
+          let target = creep.pos.findClosestByPath(construction_sites);
+          if(this.creep.build(target) == ERR_NOT_IN_RANGE) {
+              this.creep.moveTo(target);
+          }
+          return true;
+      } else {
+          return false;
+      }
+    },
+
     /** @param {Creep} creep **/
     run: function (creep)
     {
+        this.creep = creep;
         /** Define a working state **/
         if(creep.memory.working && creep.carry.energy == 0) {
             creep.memory.working = false;
@@ -65,22 +108,22 @@ var roleBuilder = {
         }
 
         if(!creep.memory.working) {
-            /** Gather energy **/
-            var sources = creep.room.find(FIND_DROPPED_ENERGY);
-            if(sources.length < 1) {
-                console.log("[!] Not enough energy dropped for builders to work upon.");
-            }
-            var target = quickestRoute(creep, sources);
-            if(creep.pickup(target) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(target);
-            }
+
+            this.getEnergy();
+            return 0;
 
         } else {
 
-            /** Work **/
-            repairProcedure(creep);
+            /** Repairs first **/
+            if(this.repair()) {
+               return 0;
+            }
 
 
+            /** Building later **/
+            if(this.build()) {
+                return 0;
+            }
         }
 
     },
