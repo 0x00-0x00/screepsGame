@@ -28,15 +28,12 @@ var roleTransporter = {
 
 
         /** Check if there are extensions/spawns with storage capacity **/
-        if(structs == null) {
-            console.log("Transporter error: No structures to store energy.");
-            return false;
-        } else {
+        if(structs[0] != null || structs.length > 0) {
             let target = this.creep.pos.findClosestByPath(structs);
+            console.log("Transporter moving resources to " + target);
             if(this.creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                 this.creep.moveTo(target);
             }
-            return true;
         }
 
         /** Check if there are any containers able to receive energy**/
@@ -44,8 +41,8 @@ var roleTransporter = {
             console.log("Transporter error: No containers to store energy.");
             return false;
         } else {
-            if(this.creep.transfer(container) == ERR_NOT_IN_RANGE) {
-                this.creep.moveTo(target);
+            if(this.creep.transfer(container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                this.creep.moveTo(container);
             }
             return true;
         }

@@ -76,11 +76,12 @@ module.exports.loop = function () {
     UPGRADER_LIST = [];
     TRANSPORTER_LIST = [];
     HARVESTER_LIST = [];
+    BUILDER_LIST = [];
 
     /** Creep track-list generation **/
-    generateCreeps(TRANSPORTER_LIST, 1, "Transporter");
-    generateCreeps(ENERGIZER_LIST, 2, "Energizer");
-    generateCreeps(HARVESTER_LIST, 5, "Harvester");
+    generateCreeps(TRANSPORTER_LIST, 2, "Transporter");
+    generateCreeps(ENERGIZER_LIST, 4, "Energizer");
+    generateCreeps(HARVESTER_LIST, 4, "Harvester");
     generateCreeps(UPGRADER_LIST, 5, "Upgrader");
 
     TOTAL_WORKERS_LIST = HARVESTER_LIST.concat(UPGRADER_LIST);

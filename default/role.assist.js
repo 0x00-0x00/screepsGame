@@ -68,7 +68,7 @@ var roleAssist = {
         }
 
         spawnPoint.createCreep(parts, worker_name);
-        Game.creeps[worker_name].memory.role = role;
+        //Game.creeps[worker_name].memory.role = role;
         console.log("[+] Spawned a " + role + " named " + worker_name);
         return 0;
     }

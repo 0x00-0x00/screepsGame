@@ -34,16 +34,18 @@ var quickestRoute = function(creep, sources)
 };
 
 let retrieveEnergyFromContainer = function(creep) {
-    let container = creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
+    let container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (s) => s.structureType == STRUCTURE_CONTAINER && s.store[RESOURCE_ENERGY] > 0
     });
 
     /** If there arent containers or are empty  **/
     if(container == null) {
+        console.log("Upgrader error: There are no energy containers available.");
         return false;
     }
 
-    if(creep.withdraw(container) == ERR_NOT_IN_RANGE) {
+
+    if(creep.withdraw(container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
         creep.moveTo(container);
     }
 

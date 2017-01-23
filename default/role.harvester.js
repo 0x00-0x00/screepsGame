@@ -13,10 +13,13 @@ Array.max = function( array ) {
 
 let depositEnergy = function(creep)
 {
-  let structs = creep.room.find(FIND_MY_STRUCTURES);
-  let container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-      filter: (s) => s.structureType == STRUCTURE_CONTAINER && s.store[RESOURCE_ENERGY] < s.storeCapacity
-  });
+
+
+    if(creep.carry.energy < creep.energyCapacity) {
+        console.log("Idle sequence.");
+    }
+
+    let structs = creep.room.find(FIND_MY_STRUCTURES);
 
   for(let x in structs) {
       let structure = structs[x];
@@ -27,17 +30,6 @@ let depositEnergy = function(creep)
           return true;
       }
   }
-  if(container == null) {
-      console.log("No container.");
-  } else {
-      console.log("Transferring to container.")
-      if(creep.transfer(container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-          creep.moveTo(container);
-      }
-  }
-
-
-
 };
 
 let retrieveEnergyFromContainer = function(creep) {
@@ -47,10 +39,12 @@ let retrieveEnergyFromContainer = function(creep) {
 
     /** If there arent containers or are empty  **/
     if(container == null) {
+        console.log("Harvester error: There are no energy containers available.");
         return false;
     }
 
-    if(creep.withdraw(container) == ERR_NOT_IN_RANGE) {
+
+    if(creep.withdraw(container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
         creep.moveTo(container);
     }
 
@@ -174,10 +168,16 @@ var roleHarvester = {
      * @param totalEnergy Integer
      * @param minimumCost Integer
      */
-    parts: [WORK, WORK, MOVE, MOVE, CARRY, CARRY],
+    parts: [WORK, MOVE, MOVE, CARRY, CARRY],
+
+    getEnergy: function() {
+      retrieveEnergyFromContainer(this.creep);
+
+    },
 
     run: function(creep, totalEnergy, minimumCost)
     {
+
 
       /** Define a working state **/
       if(creep.memory.working && creep.carry.energy == 0) {
@@ -188,45 +188,12 @@ var roleHarvester = {
           creep.memory.working = true;
       }
 
+      this.creep = creep;
+
 
       if(!creep.memory.working) {
 
-          /** This ensures survival of Harvesters using stored energy into spawning **/
-          if(totalEnergy < minimumCost) {
-              if(!retrieveEnergyFromContainer(creep)) {
-                  console.log("[!] Containers are empty.");
-              }
-          }
-          /** Gets all sources from ROOM **/
-          let sources = creep.room.find(FIND_SOURCES_ACTIVE);
-          let target = quickestRoute(creep, sources);
-
-          /** Priority to NEAR decaying energy **/
-          let dropped = creep.room.find(FIND_DROPPED_ENERGY);
-          let dropped_isNear = (creep.pos.getRangeTo(dropped[0]) < creep.pos.getRangeTo(target));
-
-          if(dropped.length > 0  && dropped_isNear) {
-              let dropped_source = dropped[0];
-
-              creep.say("Picking");
-              if(creep.pickup(dropped_source) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(dropped_source);
-              }
-
-              return 0;
-          }
-
-
-          /** Moving and harvesting code **/
-
-          if(creep.harvest(target) == ERR_NOT_IN_RANGE) {
-              goTo(creep, target);
-              //creep.say("Moving");
-          } else {
-              creep.say("Harvesting");
-          }
-
-          return 0;
+         this.getEnergy();
 
       } else {
 
@@ -239,12 +206,11 @@ var roleHarvester = {
           if(buildConstructions(creep, totalEnergy, minimumCost)) {
               return 0;
 
-          } else {
+          }
 
-              /** If nothing above, deposit energy. **/
-              if(depositEnergy(creep)) {
-                  return 0;
-              }
+          /** If nothing above, deposit energy. **/
+          if(depositEnergy(creep)) {
+              return 0;
           }
 
 

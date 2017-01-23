@@ -3,10 +3,13 @@
 Array.min = function( array )
 {
     return Math.min.apply(Math, array);
-}
+};
 
-/** @param {Creep} {Sources} **/
-var quickestRoute(creep, sources)
+/**  *
+ * @param creep
+ * @param sources
+ */
+var quickestRoute = function(creep, sources)
 {
     let distances = [];
     for(var i in sources) {
@@ -27,15 +30,17 @@ var quickestRoute(creep, sources)
 
 }
 
-/** @param {Structure} structure**/
-var checkRepair(struct)
+/** *
+ * @param struct
+ */
+var checkRepair = function(struct)
 {
     if(struct.hits < struct.hitsMax / 2) {
         return true;
     } else {
         return false;
     }
-}
+};
 
 /** @param {Creep} creep **/
 var repairProcedure(creep) {
