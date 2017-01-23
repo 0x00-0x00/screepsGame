@@ -3,14 +3,34 @@ var roleUpgrader = require('role.upgrader');
 var roleAssist = require('role.assist');
 var roleTransporter = require('role.transporter');
 
+/** @param {Game} Game **/
+var getTotalEnergy = function(Game)
+{
+    var totalEnergy = 0;
+    var roomName = "W2N5";
+    var structs = Game.rooms[roomName].find(FIND_MY_STRUCTURES);
+    for(var name in structs) {
+        var structure = structs[name];
+        if(structure.energy != undefined && structure.energy > 0) {
+            totalEnergy += structure.energy;
+        }
+    }
+    return totalEnergy;
+}
+
+
 module.exports.loop = function () {
 
+    /** Population Control Variables**/
+    var totalEnergy = getTotalEnergy(Game);
+    var minimum_cost = 300;
 
     for(var name in Game.creeps) {
         var creep = Game.creeps[name];
 
         if(~name.indexOf("Harvester")) {
-            roleHarvester.run(creep);
+            /** Maintenance & building requires knowledge of current energy amount **/
+            roleHarvester.run(creep, totalEnergy, minimum_cost);
         }
 
         if(~name.indexOf("Upgrader")) {
@@ -40,7 +60,7 @@ module.exports.loop = function () {
     HARVESTER_LIST = [];
 
     /** Harvester's generation **/
-    for(var i=0; i < 10; i++)
+    for(var i=0; i < 6; i++)
     {
         HARVESTER_LIST[i] = "Harvester" + i;
     }
@@ -59,10 +79,10 @@ module.exports.loop = function () {
     console.log("Total workers planned ...: " + TOTAL_WORKERS);
     console.log("Total workers alive .....: " + WORKERS_LIST.length);
     console.log("Current workers .........: " + WORKERS_LIST);
+    console.log("Energy: " + totalEnergy);
 
-    var minimum_cost = 300;
     if(num_creeps < TOTAL_WORKERS) {
-        if(SPAWN_POINT.energy >= minimum_cost) {
+        if(totalEnergy >= minimum_cost) {
         /** Checks the difference and spawn it **/
             var diff = TOTAL_WORKERS - WORKERS_LIST.length;
             var set_diff = TOTAL_WORKERS_LIST.filter(function(x) { return WORKERS_LIST.indexOf(x) < 0})
@@ -79,7 +99,7 @@ module.exports.loop = function () {
                  * **/
 
 
-                if(roleAssist.spawnProcedure(HARVESTER_LIST, deserter, "harvester", [WORK, WORK, MOVE, MOVE, CARRY, CARRY], SPAWN_POINT) == 0) {
+                if(roleAssist.spawnProcedure(HARVESTER_LIST, deserter, "harvester", [WORK, MOVE, MOVE, CARRY, CARRY], SPAWN_POINT) == 0) {
                     break;
                 }
 

@@ -11,6 +11,37 @@ Array.max = function( array ) {
     return Math.max.apply(Math, array);
 }
 
+/** @param {Creep} {List} **/
+var nearestTarget = function(creep, targets)
+{
+    /** Count targets **/
+    let num_targets = targets.length;
+    if(num_targets <= 1) {
+        return targets[0];
+    }
+
+    /** Calculate all the distances **/
+    let distances = [];
+    for(var x in targets) {
+        let target = targets[x];
+        let distance = creep.pos.getRangeTo(target);
+        distances[x] = distance;
+    }
+
+    /** Get the least value element from set and identify the target corresponding to it. **/
+    let nearest = Array.min(distances);
+    for(var x in targets) {
+        var target = targets[x];
+        let distance = creep.pos.getRangeTo(target);
+        if(distance == nearest) {
+            return target;
+        }
+    }
+
+
+
+}
+
 /** @param {Source} active sources**/
 var quickestRoute = function(creep, sources)
 {
@@ -82,7 +113,7 @@ var repairProcedure = function(creep) {
 var roleHarvester = {
   /** @param {Creep} creep **/
 
-  run: function(creep)
+  run: function(creep, totalEnergy, minimumCost)
   {
       /** Defines the spawn point **/
       var spawnPoint = Game.spawns['Spawn1'];
@@ -91,7 +122,7 @@ var roleHarvester = {
       }
 
       /** Define a variable to contain spawnPoint energy **/
-      var total_energy = spawnPoint.energy;
+      var total_energy = totalEnergy;
 
 
       /** Define a working state **/
@@ -149,13 +180,14 @@ var roleHarvester = {
           let num_constructs = constructs.length;
 
           /** Only build when spawnPoint is full of energy **/
-          if(num_constructs > 0 && total_energy == spawnPoint.energyCapacity) {
-              let target = constructs[0];
-              if(creep.pos.inRangeTo(target, 1)) {
-                  creep.build(target);
+          if(num_constructs > 0 && total_energy > minimumCost) {
+              var target = nearestTarget(creep, constructs);
+              if(creep.build(target) == ERR_NOT_IN_RANGE) {
+                  creep.moveTo(target);
               } else {
-                  goTo(creep, target);
+                  creep.say("Building")
               }
+
           } else {
 
               /** Priority to deposits like Extensions, Storages and Containers **/

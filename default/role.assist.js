@@ -50,7 +50,7 @@ var roleAssist = {
         var structures = Game.rooms['W2N5'].find(FIND_MY_STRUCTURES);
         for(var name in structures) {
             var target = structures[name];
-            if(target.energy > 0) {
+            if(target.energy != undefined && target.energy > 0) {
                 total_energy += target.energy;
             }
         }
