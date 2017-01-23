@@ -25,6 +25,24 @@ let depositEnergy = function(creep)
   }
 };
 
+let buildConstructions = function(creep, totalEnergy, minimumCost) {
+    let constructs = creep.room.find(FIND_CONSTRUCTION_SITES);
+
+    if(constructs.length > 0 && (totalEnergy > minimumCost)) {
+        let target = creep.pos.findClosestByPath(constructs);
+        if(creep.build(target) == ERR_NOT_IN_RANGE) {
+            creep.moveTo(target);
+        } else {
+            creep.say("Building")
+        }
+        return true;
+
+    } else {
+        return false;
+    }
+
+};
+
 /**  Quickest route or cycle through energy sources *
  * @param creep
  * @param sources
@@ -111,7 +129,7 @@ var roleHarvester = {
       }
 
       /** Define a variable to contain spawnPoint energy **/
-      var total_energy = totalEnergy;
+      let total_energy = totalEnergy;
 
 
       /** Define a working state **/
@@ -164,18 +182,9 @@ var roleHarvester = {
               return 0;
           }
 
-          /** If there are not any constructions sites **/
-          let constructs = creep.room.find(FIND_CONSTRUCTION_SITES);
-          let num_constructs = constructs.length;
-
-          /** Only build when spawnPoint is full of energy **/
-          if(num_constructs > 0 && total_energy > minimumCost) {
-              let target = creep.pos.findClosestByPath(constructs);
-              if(creep.build(target) == ERR_NOT_IN_RANGE) {
-                  creep.moveTo(target);
-              } else {
-                  creep.say("Building")
-              }
+          /** Construction code **/
+          if(buildConstructions(creep, totalEnergy, minimumCost)) {
+              return 0;
 
           } else {
 
