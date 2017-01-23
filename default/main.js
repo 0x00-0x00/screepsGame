@@ -6,6 +6,24 @@ var roleTransporter = require('role.transporter');
 module.exports.loop = function () {
 
 
+    for(var name in Game.creeps) {
+        var creep = Game.creeps[name];
+
+        if(~name.indexOf("Harvester")) {
+            roleHarvester.run(creep);
+        }
+
+        if(~name.indexOf("Upgrader")) {
+            roleUpgrader.run(creep);
+            //creep.suicide();
+        }
+
+        if(~name.indexOf("Transporter")) {
+            //roleTransporter.run(creep);
+            creep.suicide();
+        }
+    }
+
     /** Count creeps **/
     var num_creeps = 0
     WORKERS_LIST = [];
@@ -22,7 +40,7 @@ module.exports.loop = function () {
     HARVESTER_LIST = [];
 
     /** Harvester's generation **/
-    for(var i=0; i < 8; i++)
+    for(var i=0; i < 10; i++)
     {
         HARVESTER_LIST[i] = "Harvester" + i;
     }
@@ -37,10 +55,10 @@ module.exports.loop = function () {
     TOTAL_WORKERS_LIST = TOTAL_WORKERS_LIST.concat(TRANSPORTER_LIST);
     TOTAL_WORKERS = TOTAL_WORKERS_LIST.length;
 
-    //console.log("#######################################################################")
-    //console.log("Total workers planned ...: " + TOTAL_WORKERS);
-    //console.log("Total workers alive .....: " + WORKERS_LIST.length);
-    //console.log("Current workers .........: " + WORKERS_LIST);
+    console.log("#######################################################################")
+    console.log("Total workers planned ...: " + TOTAL_WORKERS);
+    console.log("Total workers alive .....: " + WORKERS_LIST.length);
+    console.log("Current workers .........: " + WORKERS_LIST);
 
     var minimum_cost = 300;
     if(num_creeps < TOTAL_WORKERS) {
@@ -61,7 +79,7 @@ module.exports.loop = function () {
                  * **/
 
 
-                if(roleAssist.spawnProcedure(HARVESTER_LIST, deserter, "harvester", [WORK, WORK, MOVE, CARRY], SPAWN_POINT) == 0) {
+                if(roleAssist.spawnProcedure(HARVESTER_LIST, deserter, "harvester", [WORK, WORK, MOVE, MOVE, CARRY, CARRY], SPAWN_POINT) == 0) {
                     break;
                 }
 
@@ -75,27 +93,10 @@ module.exports.loop = function () {
 
 
             }
-        } else {
-            console.log("[+] Everything is okay.");
         }
+    } else {
+        console.log("[+] Everything is okay.");
     }
 
 
-    for(var name in Game.creeps) {
-        var creep = Game.creeps[name];
-
-        if(~name.indexOf("Harvester")) {
-            roleHarvester.run(creep);
-        }
-
-        if(~name.indexOf("Upgrader")) {
-            roleUpgrader.run(creep);
-            //creep.suicide();
-        }
-
-        if(~name.indexOf("Transporter")) {
-            //roleTransporter.run(creep);
-            creep.suicide();
-        }
-    }
 }

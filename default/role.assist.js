@@ -45,9 +45,18 @@ var roleAssist = {
     spawnProcedure: function(worker_list, worker_name, role, parts, spawnPoint)
     {
         var cost = this.calculate_creep_cost(parts);
+        var total_energy = 0;
+
+        var structures = Game.rooms['W2N5'].find(FIND_MY_STRUCTURES);
+        for(var name in structures) {
+            var target = structures[name];
+            if(target.energy > 0) {
+                total_energy += target.energy;
+            }
+        }
 
         /** Check costs **/
-        if(cost > spawnPoint.energy) {
+        if(cost > total_energy) {
             var missing_energy = cost - spawnPoint.energy;
             console.log("[!] It is missing " + missing_energy + " energy to spawn one more " + role + ".");
             return -1;
