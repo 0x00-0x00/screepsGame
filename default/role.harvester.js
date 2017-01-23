@@ -5,113 +5,102 @@
 
 Array.min = function ( array ) {
     return Math.min.apply(Math, array );
-}
+};
 
 Array.max = function( array ) {
     return Math.max.apply(Math, array);
-}
+};
 
-/** @param {Creep} {List} **/
-var nearestTarget = function(creep, targets)
+let depositEnergy = function(creep)
 {
-    /** Count targets **/
-    let num_targets = targets.length;
-    if(num_targets <= 1) {
-        return targets[0];
-    }
+  let structs = creep.room.find(FIND_MY_STRUCTURES);
+  for(let x in structs) {
+      let structure = structs[x];
+      if(structure.energyCapacity > structure.energy) {
+          if(creep.transfer(structure, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+              creep.moveTo(structure);
+          }
+          return true;
+      }
+  }
+};
 
-    /** Calculate all the distances **/
-    let distances = [];
-    for(var x in targets) {
-        let target = targets[x];
-        let distance = creep.pos.getRangeTo(target);
-        distances[x] = distance;
-    }
-
-    /** Get the least value element from set and identify the target corresponding to it. **/
-    let nearest = Array.min(distances);
-    for(var x in targets) {
-        var target = targets[x];
-        let distance = creep.pos.getRangeTo(target);
-        if(distance == nearest) {
-            return target;
-        }
-    }
-
-
-
-}
-
-/** @param {Source} active sources**/
-var quickestRoute = function(creep, sources)
-{
+/**  Quickest route or cycle through energy sources *
+ * @param creep
+ * @param sources
+ */
+let quickestRoute = function (creep, sources) {
     /** If only one source, go to it. **/
     let num_sources = sources.length;
-    if(num_sources == 1) {
+    if (num_sources == 1) {
         return sources[0];
     }
 
     /** Check distances **/
-    var distance_1 = creep.pos.getRangeTo(sources[0]);
-    var distance_2 = creep.pos.getRangeTo(sources[1]);
+    let distance_1 = creep.pos.getRangeTo(sources[0]);
+    let distance_2 = creep.pos.getRangeTo(sources[1]);
 
     /** Check energy amount of sources **/
-    var full_source_01 = sources[0].energy < sources[0].energyCapacity;
-    var full_source_02 = sources[1].energy < sources[1].energyCapacity;
+    let full_source_01 = sources[0].energy < sources[0].energyCapacity;
+    let full_source_02 = sources[1].energy < sources[1].energyCapacity;
 
     /** This ensures all sources are going to be harvested! **/
-    if(full_source_01 && !full_source_02) {
+    if (full_source_01 && !full_source_02) {
         return sources[1];
     }
 
     /** Choose another energy source to balance consumption of energy resources **/
-    if(sources[1].energy > sources[0].energy && distance_1 != 1) {
+    if (sources[1].energy > sources[0].energy && distance_1 != 1) {
         return sources[1];
     }
 
 
-    if(distance_1 < distance_2) {
+    if (distance_1 < distance_2) {
         return sources[0];
     } else {
         return sources[1];
     }
-}
+};
 
-var goTo = function(creep, target) {
-    var path = creep.pos.findPathTo(target, {maxOps: 200});
-    if(path.length) {
+let goTo = function (creep, target) {
+    let path = creep.pos.findPathTo(target, {maxOps: 200});
+    if (path.length) {
         creep.move(path[0].direction);
     }
-}
+};
 
-/** @param {Structure} structure **/
-var checkRepair = function(struct)
-{
-    if(struct.hits < struct.hitsMax / 2) {
+/**  *
+ * @param struct
+ */
+let checkRepair = function (struct) {
+    if (struct.hits < struct.hitsMax / 2) {
         return true;
     } else {
         return false;
     }
-}
+};
 
-/** @param {Creep} creep **/
-var repairProcedure = function(creep) {
-    var repairs = creep.room.find(FIND_MY_STRUCTURES);
-    for(var i in repairs) {
-        var target = repairs[i];
-        if(checkRepair(target)) {
-            if(creep.repair(target) == ERR_NOT_IN_RANGE) {
+/** @param creep **/
+let repairProcedure = function (creep) {
+    let repairs = creep.room.find(FIND_MY_STRUCTURES);
+    for (let i in repairs) {
+        let target = repairs[i];
+        if (checkRepair(target)) {
+            if (creep.repair(target) == ERR_NOT_IN_RANGE) {
                 creep.moveTo(target);
             }
-        return true;
+            return true;
         }
     }
     return false;
-}
+};
 
 
 var roleHarvester = {
-  /** @param {Creep} creep **/
+    /** @param creep Object
+     * @param totalEnergy Integer
+     * @param minimumCost Integer
+     */
 
   run: function(creep, totalEnergy, minimumCost)
   {
@@ -138,12 +127,12 @@ var roleHarvester = {
       if(!creep.memory.working) {
 
           /** Gets all sources from ROOM **/
-          var sources = creep.room.find(FIND_SOURCES_ACTIVE);
-          var target = quickestRoute(creep, sources);
+          let sources = creep.room.find(FIND_SOURCES_ACTIVE);
+          let target = quickestRoute(creep, sources);
 
           /** Priority to NEAR decaying energy **/
-          var dropped = creep.room.find(FIND_DROPPED_ENERGY);
-          var dropped_isNear = (creep.pos.getRangeTo(dropped[0]) < creep.pos.getRangeTo(target))
+          let dropped = creep.room.find(FIND_DROPPED_ENERGY);
+          let dropped_isNear = (creep.pos.getRangeTo(dropped[0]) < creep.pos.getRangeTo(target));
 
           if(dropped.length > 0  && dropped_isNear) {
               let dropped_source = dropped[0];
@@ -176,12 +165,12 @@ var roleHarvester = {
           }
 
           /** If there are not any constructions sites **/
-          var constructs = creep.room.find(FIND_CONSTRUCTION_SITES);
+          let constructs = creep.room.find(FIND_CONSTRUCTION_SITES);
           let num_constructs = constructs.length;
 
           /** Only build when spawnPoint is full of energy **/
           if(num_constructs > 0 && total_energy > minimumCost) {
-              var target = nearestTarget(creep, constructs);
+              let target = creep.pos.findClosestByPath(constructs);
               if(creep.build(target) == ERR_NOT_IN_RANGE) {
                   creep.moveTo(target);
               } else {
@@ -190,24 +179,9 @@ var roleHarvester = {
 
           } else {
 
-              /** Priority to deposits like Extensions, Storages and Containers **/
-              var structs = creep.room.find(FIND_MY_STRUCTURES);
-              for(var x in structs) {
-                  var structure = structs[x];
-                  if(structure.energyCapacity > structure.energy) {
-                      if(creep.transfer(structure, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                          goTo(creep, structure);
-                      }
-                      return 0;
-                  }
-
-              }
-
-              /** Move and deposit energy **/
-              if(creep.transfer(spawnPoint, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                  //creep.say("Returning ...")
-                  goTo(creep, spawnPoint);
-                  //creep.moveTo(target);
+              /** If nothing above, deposit energy. **/
+              if(depositEnergy(creep)) {
+                  return 0;
               }
           }
 
@@ -222,28 +196,3 @@ var roleHarvester = {
 };
 
 module.exports = roleHarvester;
-
-/**let sources = creep.room.find(FIND_SOURCES_ACTIVE);
-
- let target;
- let switchSource = _.random(0, 4) == 0;
- if(Source.sourcePriority(sources[1]) > Source.sourcePriority(sources[0])) {
-              if(switchSource) {
-                  target = sources[0];
-              } else {
-                  target = sources[1];
-              }
-          } else {
-              if(switchSource) {
-                  target = sources[1];
-              } else {
-                  target = sources[0];
-              }
-          }
-
- if(creep.harvest(target) == ERR_NOT_IN_RANGE) {
-              creep.moveTo(target);
-              creep.say("Moving to target ...")
-          } else {
-              creep.say("Mining ...")
-          }**/
