@@ -53,6 +53,32 @@ var goTo = function(creep, target) {
     }
 }
 
+/** @param {Structure} structure **/
+var checkRepair = function(struct)
+{
+    if(struct.hits < struct.hitsMax / 2) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/** @param {Creep} creep **/
+var repairProcedure = function(creep) {
+    var repairs = creep.room.find(FIND_MY_STRUCTURES);
+    for(var i in repairs) {
+        var target = repairs[i];
+        if(checkRepair(target)) {
+            if(creep.repair(target) == ERR_NOT_IN_RANGE) {
+                creep.moveTo(target);
+            }
+        return true;
+        }
+    }
+    return false;
+}
+
+
 var roleHarvester = {
   /** @param {Creep} creep **/
 
@@ -104,7 +130,7 @@ var roleHarvester = {
 
           if(creep.harvest(target) == ERR_NOT_IN_RANGE) {
               goTo(creep, target);
-              creep.say("Moving");
+              //creep.say("Moving");
           } else {
               creep.say("Harvesting");
           }
@@ -112,6 +138,11 @@ var roleHarvester = {
           return 0;
 
       } else {
+
+          /** Code giving priority to repairing procedures **/
+          if(repairProcedure(creep)) {
+              return 0;
+          }
 
           /** If there are not any constructions sites **/
           var constructs = creep.room.find(FIND_CONSTRUCTION_SITES);
@@ -126,9 +157,23 @@ var roleHarvester = {
                   goTo(creep, target);
               }
           } else {
+
+              /** Priority to deposits like Extensions, Storages and Containers **/
+              var structs = creep.room.find(FIND_MY_STRUCTURES);
+              for(var x in structs) {
+                  var structure = structs[x];
+                  if(structure.energyCapacity > structure.energy) {
+                      if(creep.transfer(structure, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                          goTo(creep, structure);
+                      }
+                      return 0;
+                  }
+
+              }
+
               /** Move and deposit energy **/
               if(creep.transfer(spawnPoint, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                  creep.say("Returning ...")
+                  //creep.say("Returning ...")
                   goTo(creep, spawnPoint);
                   //creep.moveTo(target);
               }

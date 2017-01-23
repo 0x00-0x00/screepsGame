@@ -28,7 +28,7 @@ module.exports.loop = function () {
     }
 
     /** Upgraders Generation **/
-    for(var i=0; i < 10; i++)
+    for(var i=0; i < 5; i++)
     {
         UPGRADER_LIST[i] = "Upgrader" + i;
     }
