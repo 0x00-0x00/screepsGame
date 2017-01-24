@@ -5,35 +5,10 @@ Array.min = function( array )
     return Math.min.apply(Math, array);
 };
 
-/**  *
- * @param creep
- * @param sources
- */
-var quickestRoute = function(creep, sources)
-{
-    let distances = [];
-    for(var i in sources) {
-        let target = sources[i];
-        let distance = creep.pos.getRangeTo(target);
-        distances[i] = distance;
-    }
-
-    let quickest = Array.min(distances);
-    for(var i in sources) {
-        var target = sources[i];
-        let distance = creep.pos.getRangeTo(target);
-        if(distance == quickest) {
-            return target;
-        }
-    }
-
-
-}
-
 /** *
  * @param struct
  */
-var checkRepair = function(struct)
+let checkRepair = function(struct)
 {
     if(struct.hits < struct.hitsMax / 2) {
         return true;
@@ -42,27 +17,16 @@ var checkRepair = function(struct)
     }
 };
 
-/** @param {Creep} creep **/
-var repairProcedure(creep) {
-    var repairs = creep.room.find(FIND_MY_STRUCTURES);
-    for(var i in repairs) {
-        var target = repairs[i];
-        if(checkRepair) {
-            if(creep.repair(target) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(target);
-            }
-        }
-    }
-}
+let roleBuilder = {
 
-var roleBuilder = {
+    parts: [WORK, WORK, MOVE, MOVE, CARRY, CARRY],
 
     getEnergy: function() {
       let container = this.creep.pos.findClosestByPath(FIND_STRUCTURES, {
           filter: (s) => s.structureType == STRUCTURE_CONTAINER && s.store[RESOURCE_ENERGY] > 0
       });
 
-      if(this.creep.withdraw(container) == ERR_NOT_IN_RANGE) {
+      if(this.creep.withdraw(container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
           this.creep.moveTo(container);
       }
 
@@ -89,7 +53,7 @@ var roleBuilder = {
     build: function() {
       let construction_sites = this.creep.room.find(FIND_CONSTRUCTION_SITES);
       if(construction_sites.length > 0) {
-          let target = creep.pos.findClosestByPath(construction_sites);
+          let target = this.creep.pos.findClosestByPath(construction_sites);
           if(this.creep.build(target) == ERR_NOT_IN_RANGE) {
               this.creep.moveTo(target);
           }
@@ -99,7 +63,7 @@ var roleBuilder = {
       }
     },
 
-    /** @param {Creep} creep **/
+    /** @param creep **/
     run: function (creep)
     {
         this.creep = creep;
@@ -132,6 +96,6 @@ var roleBuilder = {
         }
 
     },
-}
+};
 
 module.exports = roleBuilder;

@@ -39,7 +39,7 @@ let retrieveEnergyFromContainer = function(creep) {
 
     /** If there arent containers or are empty  **/
     if(container == null) {
-        console.log("Harvester error: There are no energy containers available.");
+        //console.log("Harvester error: There are no energy containers available.");
         return false;
     }
 
@@ -149,13 +149,14 @@ let checkRepair = function (struct) {
 
 /** @param creep **/
 let repairProcedure = function (creep) {
-    let repairs = creep.room.find(FIND_MY_STRUCTURES);
+    let repairs = creep.room.find(FIND_STRUCTURES);
     for (let i in repairs) {
         let target = repairs[i];
         if (checkRepair(target)) {
             if (creep.repair(target) == ERR_NOT_IN_RANGE) {
                 creep.moveTo(target);
             }
+            console.log("Repairs needed on :" + target);
             return true;
         }
     }
@@ -163,7 +164,7 @@ let repairProcedure = function (creep) {
 };
 
 
-var roleHarvester = {
+let roleHarvester = {
     /** @param creep Object
      * @param totalEnergy Integer
      * @param minimumCost Integer

@@ -49,10 +49,6 @@ runCreeps = function (Game, roomName) {
         number_of_creeps++;
 
         /** Run based on classes **/
-        if (~name.indexOf("Transporter")) {
-            roleTransporter.run(creep);
-        }
-
         if (~name.indexOf("Harvester")) {
             roleHarvester.run(creep, totalEnergy, harvesterCost);
         }
@@ -61,12 +57,8 @@ runCreeps = function (Game, roomName) {
             roleUpgrader.run(creep);
         }
 
-        if(~name.indexOf("Energizer")) {
-            roleEnergizer.run(creep);
-        }
-
-        if(~name.indexOf("Builder")) {
-            roleBuilder.run(creep);
+        if (~name.indexOf("Transporter")) {
+            roleTransporter.run(creep);
         }
 
     }
@@ -77,8 +69,7 @@ runCreeps = function (Game, roomName) {
 let concatenateLists = function(listOfLists) {
     MASTER_LIST = [];
     for(let list in listOfLists) {
-        let content = listOfLists[list];
-        MASTER_LIST = MASTER_LIST.concat(content);
+        MASTER_LIST.concat(list);
     }
     return MASTER_LIST;
 };
@@ -95,12 +86,13 @@ let getWorkerBlueprint = function(room) {
     if(room == "W2N5") {
         generateCreeps(BUILDER_LIST, 2, 'Builder');
         generateCreeps(ENERGIZER_LIST, 3, 'Energizer');
-        generateCreeps(TRANSPORTER_LIST, 3, "Transporter");
-        generateCreeps(UPGRADER_LIST, 5, 'Upgrader');
-        //generateCreeps(HARVESTER_LIST, 3, "Harvester");
+        //generateCreeps(HARVESTER_LIST, )
+        generateCreeps(UPGRADER_LIST, 6, 'Upgrader');
+        generateCreeps(BUILDER_LIST, 3, 'Builder');
     }
 
     /** Another room working blueprint here **/
+
     return concatenateLists(ALL_LISTS);
 
 };
@@ -111,7 +103,6 @@ let differenceOfSets = function(set1, set2) {
 
 
 let spawnMissing = function(MASTER_LIST, creepName, spawnPoint) {
-
     if(~creepName.indexOf("Harvester")) {
         return roleAssist.spawnProcedure(MASTER_LIST, creepName, roleHarvester.parts, spawnPoint);
     }
@@ -128,7 +119,7 @@ let spawnMissing = function(MASTER_LIST, creepName, spawnPoint) {
         return roleAssist.spawnProcedure(MASTER_LIST, creepName, roleEnergizer.parts, spawnPoint);
     }
 
-    if(~creepName.indexOf("Builder")) {
+    if(creepName.indexOf("Builder")) {
         return roleAssist.spawnProcedure(MASTER_LIST, creepName, roleBuilder.parts, spawnPoint);
     }
 
@@ -140,8 +131,7 @@ module.exports.loop = function() {
     /** Iterate over controlled game rooms **/
     for(let room_name in Game.rooms) {
 
-        let roomEnergy = getTotalEnergy(Game, room_name);
-        let spawnPoint = Game.spawns['Spawn1'];
+        let spawnPoint = Game.room.spawn;
         let number_of_creeps = 0;
         let MASTER_LIST = [];
         let WORKERS = [];
@@ -155,24 +145,16 @@ module.exports.loop = function() {
         WORKERS = INFO_LIST[1];
         MASTER_LIST = getWorkerBlueprint(room_name);
 
-        /** Calculate missing **/
-        let missingWorkers = differenceOfSets(MASTER_LIST, WORKERS);
-
-
-
-        /** Log information to the console **/
-        console.log("Room " + room_name + " have " + WORKERS.length + "/" + MASTER_LIST.length + " workers and " + roomEnergy + " energy.");
-
+        console.log("Room " + room_name + " have " + WORKERS.length + "/" + MASTER_LIST.length + " workers.");
         //If is okay, continue to next room
-        if(missingWorkers.length == 0) {
+        if(WORKERS.length == MASTER_LIST.length) {
             continue;
         }
 
-
+        let missingWorkers = differenceOfSets(MASTER_LIST, WORKERS);
         for(let name in missingWorkers) {
-            let creepName = missingWorkers[name];
-            if(spawnMissing(MASTER_LIST, creepName, spawnPoint)) {
-                console.log("spawnMissing: Error spawning " + creepName);
+            if(spawnMissing(MASTER_LIST, name, spawnPoint)) {
+                console.log("spawnMissing: Error!")
             }
         }
 

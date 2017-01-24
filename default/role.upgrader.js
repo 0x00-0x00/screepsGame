@@ -57,10 +57,14 @@ let retrieveEnergyFromContainer = function(creep) {
 
 var roleUpgrader = {
 
-    parts: [WORK, MOVE, MOVE, CARRY, CARRY],
+    parts: [WORK, WORK, WORK, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY],
 
     getEnergy: function() {
-        /** Priority 1: Dropped energy because it decay **/
+
+        /** Priority 1: Container storage because it is free. **/
+        retrieveEnergyFromContainer(this.creep);
+
+        /** Priority 2: Dropped energy because it decay **/
         let droppedEnergy = this.creep.room.find(FIND_DROPPED_ENERGY);
         if(droppedEnergy.length > 0) {
             let nearest = this.creep.pos.findClosestByPath(droppedEnergy);
@@ -70,8 +74,6 @@ var roleUpgrader = {
             return true;
         }
 
-        /** Priority 2: Container storage because it is free. **/
-        retrieveEnergyFromContainer(this.creep);
 
         /** Priority 3: Energy sources **/
         let energySources = this.creep.room.find(FIND_SOURCES_ACTIVE);
@@ -83,7 +85,7 @@ var roleUpgrader = {
 
     },
 
-    /** @param {Creep} creep **/
+    /** @param creep **/
     run: function (creep)
     {
 
@@ -104,10 +106,7 @@ var roleUpgrader = {
             var target = creep.room.controller;
             if(creep.upgradeController(target) == ERR_NOT_IN_RANGE) {
                 creep.moveTo(target);
-            } else {
-                creep.say("Upgrading");
             }
-
         }
     }
 

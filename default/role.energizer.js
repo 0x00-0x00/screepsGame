@@ -1,5 +1,5 @@
 var roleEnergizer = {
-    parts: [WORK, WORK, WORK, MOVE, CARRY],
+    parts: [WORK, WORK, WORK, WORK, MOVE, CARRY],
 
     harvest: function (target) {
         if(this.creep.harvest(target) == ERR_NOT_IN_RANGE) {

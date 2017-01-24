@@ -1,0 +1,151 @@
+var roleHarvester = require('role.harvester');
+var roleUpgrader = require('role.upgrader');
+var roleAssist = require('role.assist');
+var roleTransporter = require('role.transporter');
+var roleEnergizer = require('role.energizer');
+var roleBuilder = require('role.builder');
+
+/** Function to get the total number of energy available through all structures present in the room.
+ * @param Game Object
+ * @param roomName String
+ * **/
+let getTotalEnergy = function (Game, roomName) {
+    let totalEnergy = 0;
+    var structs = Game.rooms[roomName].find(FIND_MY_STRUCTURES);
+    for (var name in structs) {
+        var structure = structs[name];
+        if (structure.energy != undefined && structure.energy > 0) {
+            totalEnergy += structure.energy;
+        }
+    }
+    return totalEnergy;
+};
+
+/** Function to generate a enumerated list of creeps
+ * @param list Array
+ * @param num Integer
+ * @param job String
+ *  **/
+let generateCreeps = function(list, num, job) {
+    for(let i = 0; i < num; i++) {
+        list[i] = job + i;
+    }
+};
+
+module.exports.loop = function () {
+
+    /** Population Control Variables**/
+    var totalEnergy = getTotalEnergy(Game, "W2N5");
+    var minimum_cost = 300;
+
+    for(var name in Game.creeps) {
+        var creep = Game.creeps[name];
+
+        if(~name.indexOf("Harvester")) {
+            /** Maintenance & building requires knowledge of current energy amount **/
+            let harvesterCost = roleAssist.calculate_creep_cost(roleHarvester.parts);
+            roleHarvester.run(creep, totalEnergy, harvesterCost);
+        }
+
+        if(~name.indexOf("Upgrader")) {
+            roleUpgrader.run(creep);
+            //creep.suicide();
+        }
+
+        if(~name.indexOf("Transporter")) {
+            roleTransporter.run(creep);
+            //creep.suicide();
+        }
+
+        if(~name.indexOf("Energizer")) {
+            roleEnergizer.run(creep);
+        }
+
+        if (~name.indexOf("Builder")) {
+            roleBuilder.run(creep);
+        }
+    }
+
+    /** Count creeps **/
+    let num_creeps = 0;
+    WORKERS_LIST = [];
+    for(let name in Game.creeps) {
+        WORKERS_LIST[num_creeps] = name;
+        num_creeps++;
+    }
+
+
+    SPAWN_POINT = Game.spawns["Spawn1"];
+
+    ENERGIZER_LIST = [];
+    UPGRADER_LIST = [];
+    TRANSPORTER_LIST = [];
+    HARVESTER_LIST = [];
+    BUILDER_LIST = [];
+
+    /** Creep track-list generation **/
+    generateCreeps(TRANSPORTER_LIST, 3, "Transporter");
+    generateCreeps(ENERGIZER_LIST, 3, "Energizer");
+    generateCreeps(HARVESTER_LIST, 3, "Harvester");
+    generateCreeps(UPGRADER_LIST, 6, "Upgrader");
+    generateCreeps(BUILDER_LIST, 2, "Builder");
+
+    TOTAL_WORKERS_LIST = HARVESTER_LIST.concat(UPGRADER_LIST);
+    TOTAL_WORKERS_LIST = TOTAL_WORKERS_LIST.concat(TRANSPORTER_LIST);
+    TOTAL_WORKERS_LIST = TOTAL_WORKERS_LIST.concat(ENERGIZER_LIST);
+    TOTAL_WORKERS_LIST = TOTAL_WORKERS_LIST.concat(BUILDER_LIST);
+    TOTAL_WORKERS = TOTAL_WORKERS_LIST.length;
+
+    console.log("#######################################################################")
+    console.log("Total workers planned ...: " + TOTAL_WORKERS);
+    console.log("Total workers alive .....: " + WORKERS_LIST.length);
+    console.log("Current workers .........: " + WORKERS_LIST.sort());
+    console.log("Energy: " + totalEnergy);
+
+    if(num_creeps < TOTAL_WORKERS) {
+        if(totalEnergy >= minimum_cost) {
+        /** Checks the difference and spawn it **/
+            var diff = TOTAL_WORKERS - WORKERS_LIST.length;
+            var set_diff = TOTAL_WORKERS_LIST.filter(function(x) { return WORKERS_LIST.indexOf(x) < 0})
+            console.log("It is missing " + diff + " workers from your reign. This is inadmissible.");
+            for(var deserter in set_diff) {
+
+                /** Declare the deserter name **/
+                deserter = set_diff[deserter];
+
+                /** Priority for spawning:
+                 * 1. Harvesters,
+                 * 2. Transporters,
+                 * 3. Upgraders
+                 * **/
+
+
+                if(roleAssist.spawnProcedure(HARVESTER_LIST, deserter, roleHarvester.parts, SPAWN_POINT) == 0) {
+                    break;
+                }
+
+                if(roleAssist.spawnProcedure(TRANSPORTER_LIST, deserter, roleTransporter.parts, SPAWN_POINT) == 0) {
+                    break;
+                }
+
+                if(roleAssist.spawnProcedure(UPGRADER_LIST, deserter, roleUpgrader.parts, SPAWN_POINT) == 0) {
+                    break;
+                }
+
+                if(roleAssist.spawnProcedure(ENERGIZER_LIST, deserter, roleEnergizer.parts, SPAWN_POINT) == 0) {
+                    break;
+                }
+
+                if(roleAssist.spawnProcedure(BUILDER_LIST, deserter, roleBuilder.parts, SPAWN_POINT) == 0) {
+                    break;
+                }
+
+
+            }
+        }
+    } else {
+        console.log("[+] Everything is okay.");
+    }
+
+
+}

@@ -42,13 +42,13 @@ var roleAssist = {
         return cost;
     },
 
-    spawnProcedure: function(worker_list, worker_name, role, parts, spawnPoint)
+    spawnProcedure: function(worker_list, worker_name, parts, spawnPoint)
     {
-        var cost = this.calculate_creep_cost(parts);
-        var total_energy = 0;
+        let cost = this.calculate_creep_cost(parts);
+        let total_energy = 0;
 
-        var structures = Game.rooms['W2N5'].find(FIND_MY_STRUCTURES);
-        for(var name in structures) {
+        let structures = Game.rooms['W2N5'].find(FIND_MY_STRUCTURES);
+        for(let name in structures) {
             var target = structures[name];
             if(target.energy != undefined && target.energy > 0) {
                 total_energy += target.energy;
@@ -57,8 +57,8 @@ var roleAssist = {
 
         /** Check costs **/
         if(cost > total_energy) {
-            var missing_energy = cost - total_energy;
-            console.log("[!] It is missing " + missing_energy + " energy to spawn one more " + role + ".");
+            let missing_energy = cost - total_energy;
+            console.log("[!] It is missing " + missing_energy + " energy to spawn one more creep.");
             return -1;
         }
 
@@ -69,7 +69,7 @@ var roleAssist = {
 
         spawnPoint.createCreep(parts, worker_name);
         //Game.creeps[worker_name].memory.role = role;
-        console.log("[+] Spawned a " + role + " named " + worker_name);
+        console.log("[+] Spawned a creep named " + worker_name);
         return 0;
     }
 }

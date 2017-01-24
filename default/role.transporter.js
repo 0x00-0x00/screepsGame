@@ -34,6 +34,7 @@ var roleTransporter = {
             if(this.creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                 this.creep.moveTo(target);
             }
+            return true;
         }
 
         /** Check if there are any containers able to receive energy**/
@@ -41,6 +42,7 @@ var roleTransporter = {
             console.log("Transporter error: No containers to store energy.");
             return false;
         } else {
+            console.log("Transporter moving resources to " + container);
             if(this.creep.transfer(container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                 this.creep.moveTo(container);
             }
