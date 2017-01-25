@@ -33,12 +33,24 @@ let roleBuilder = {
     },
 
     repair: function() {
+        /** Static variables **/
+        let maximumHits = 100000;
+
         let my_structures = this.creep.room.find(FIND_MY_STRUCTURES);
         let structures = this.creep.room.find(FIND_STRUCTURES);
         let repair_strutures = my_structures.concat(structures);
 
         for(let i in repair_strutures) {
             let repair_struct = repair_strutures[i];
+
+            /** Set a maximum hitpoints for Walls and Ramparts **/
+            if(repair_struct.structureType == STRUCTURE_WALL || repair_struct.structureType == STRUCTURE_RAMPART) {
+                if(repair_struct.hits > maximumHits) {
+                    continue;
+                }
+            }
+
+
             if(checkRepair(repair_struct)) {
                 if(this.creep.repair(repair_struct) == ERR_NOT_IN_RANGE) {
                     this.creep.moveTo(repair_struct);

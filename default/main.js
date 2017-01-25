@@ -4,6 +4,7 @@ let roleUpgrader = require('role.upgrader');
 let roleBuilder = require('role.builder');
 let roleTransporter = require('role.transporter');
 let roleAssist = require('role.assist');
+var roleWarrior = require('role.warrior');
 
 /** Function to get the total number of energy available through all structures present in the room.
  * @param Game Object
@@ -69,6 +70,10 @@ runCreeps = function (Game, roomName) {
             roleBuilder.run(creep);
         }
 
+        if(~name.indexOf("Warrior")) {
+            roleWarrior.run(creep);
+        }
+
     }
 
     return [number_of_creeps, WORKERS];
@@ -83,21 +88,46 @@ let concatenateLists = function(listOfLists) {
     return MASTER_LIST;
 };
 
+let planDefense = function (room) {
+  let hostiles = room.find(FIND_HOSTILE_CREEPS);
+  let numUnits = 0;
+  if(hostiles.length == 0) {
+      return false;
+  }
+
+
+  for(let host in hostiles) {
+      let hostile = hostiles[host];
+
+      if(hostile.hits > roleWarrior.getMaximumHits()) {
+          numUnits += (hostile.hits / roleWarrior.getMaximumHits()) - 1;
+      } else {
+          numUnits += 1
+      }
+
+
+  }
+
+
+  return generateCreeps(WARRIOR_LIST, numUnits, "Warrior");
+};
+
 let getWorkerBlueprint = function(room) {
     BUILDER_LIST = [];
     ENERGIZER_LIST = [];
     HARVESTER_LIST = [];
     UPGRADER_LIST = [];
     TRANSPORTER_LIST = [];
-    ALL_LISTS = [BUILDER_LIST, ENERGIZER_LIST, HARVESTER_LIST, UPGRADER_LIST, TRANSPORTER_LIST];
+    WARRIOR_LIST = [];
+    ALL_LISTS = [BUILDER_LIST, ENERGIZER_LIST, HARVESTER_LIST, UPGRADER_LIST, TRANSPORTER_LIST, WARRIOR_LIST];
 
     /** Control your room workers here **/
     if(room == "W2N5") {
-        generateCreeps(BUILDER_LIST, 2, 'Builder');
+        generateCreeps(BUILDER_LIST, 5, 'Builder');
         generateCreeps(ENERGIZER_LIST, 3, 'Energizer');
         generateCreeps(TRANSPORTER_LIST, 3, "Transporter");
-        generateCreeps(UPGRADER_LIST, 5, 'Upgrader');
-        //generateCreeps(HARVESTER_LIST, 3, "Harvester");
+        generateCreeps(UPGRADER_LIST, 3, 'Upgrader');
+        planDefense(Game.rooms[room]);
     }
 
     /** Another room working blueprint here **/
@@ -132,6 +162,10 @@ let spawnMissing = function(MASTER_LIST, creepName, spawnPoint) {
         return roleAssist.spawnProcedure(MASTER_LIST, creepName, roleBuilder.parts, spawnPoint);
     }
 
+    if(~creepName.indexOf("Warrior")) {
+        return roleAssist.spawnProcedure(MASTER_LIST, creepName, roleWarrior.parts, spawnPoint);
+    }
+
     return true;
 };
 
@@ -157,8 +191,6 @@ module.exports.loop = function() {
 
         /** Calculate missing **/
         let missingWorkers = differenceOfSets(MASTER_LIST, WORKERS);
-
-
 
         /** Log information to the console **/
         console.log("Room " + room_name + " have " + WORKERS.length + "/" + MASTER_LIST.length + " workers and " + roomEnergy + " energy.");

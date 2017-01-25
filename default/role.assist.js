@@ -67,6 +67,10 @@ var roleAssist = {
             return -1;
         }
 
+        if(spawnPoint.canCreateCreep(parts, worker_name) != 0) {
+            console.log("[+] Cant create the creep " + worker_name + " right now.");
+            return 0;
+        }
         spawnPoint.createCreep(parts, worker_name);
         //Game.creeps[worker_name].memory.role = role;
         console.log("[+] Spawned a creep named " + worker_name);
