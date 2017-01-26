@@ -34,19 +34,36 @@ let retrieveEnergyFromContainer = function(creep) {
 
 };
 
+let retrierEnergyFromAll = function(creep) {
+  let storages = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+      filter: (s) => (s.structureType == STRUCTURE_CONTAINER || s.structureType == STRUCTURE_STORAGE) && (s.store[RESOURCE_ENERGY] > 0)
+  });
+
+  if(storages == null) {
+      console.log("[+] OH FUCK NO ENERGY ON CONTAINERS OR STORAGE. YOU ARE DOOMED.");
+      return false;
+  }
+
+  if(creep.withdraw(storages, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+      creep.moveTo(storages);
+  }
+
+  return true;
+};
 
 
-var roleTransporter = {
+let roleTransporter = {
     parts: [MOVE, MOVE, CARRY, CARRY, CARRY, CARRY],
 
     saveSpawn: function() {
         let energyAvailable = getTotalEnergy(Game, "W2N5");
-        let level = 4;
+        let level = 5;
         let minimumEnergy = 200 * level;
         let enemies = this.creep.room.find(FIND_HOSTILE_CREEPS);
 
-        if(energyAvailable < minimumEnergy && enemies.length > 0) {
-            retrieveEnergyFromContainer(this.creep);
+        //if(energyAvailable < minimumEnergy && enemies.length > 0) {
+        if(energyAvailable < minimumEnergy) {
+            retrierEnergyFromAll(this.creep);
             this.storeEnergy();
             return true;
         } else {
@@ -60,7 +77,8 @@ var roleTransporter = {
 
         /** Check if there is dropped energy on the ground **/
         if(target == null) {
-            return false;
+            retrieveEnergyFromContainer(this.creep);
+            return true;
         }
 
         if(this.creep.pickup(target) == ERR_NOT_IN_RANGE) {
@@ -72,18 +90,36 @@ var roleTransporter = {
     storeEnergy: function() {
 
         let structs = this.creep.room.find(FIND_MY_STRUCTURES, {
-            filter:  (s) => s.energy < s.energyCapacity
+            filter:  (s) => (s.energy < s.energyCapacity) && s.structureType != STRUCTURE_TOWER
         });
+
+
+        /** This is used when you dont have a freaking huge STORAGE and do not want to use the containers as energy dropping boxes
+         * let container = this.creep.pos.findClosestByPath(FIND_STRUCTURES, {
+            filter: (s) => (s.structureType == STRUCTURE_CONTAINER || s.structureType == STRUCTURE_STORAGE) && s.store[RESOURCE_ENERGY] < s.storeCapacity
+        });**/
 
         let container = this.creep.pos.findClosestByPath(FIND_STRUCTURES, {
-            filter: (s) => s.structureType == STRUCTURE_CONTAINER && s.store[RESOURCE_ENERGY] < s.storeCapacity
+            filter: (s) => (s.structureType == STRUCTURE_STORAGE && s.store[RESOURCE_ENERGY] < s.storeCapacity)
         });
 
+        let towers = this.creep.room.find(FIND_MY_STRUCTURES, {
+            filter: (s) => (s.energy < (s.energyCapacity - this.creep.carryCapacity)) && s.structureType == STRUCTURE_TOWER
+        });
 
         /** Check if there are extensions/spawns with storage capacity **/
         if(structs[0] != null || structs.length > 0) {
             let target = this.creep.pos.findClosestByPath(structs);
             //console.log("Transporter moving resources to " + target);
+            if(this.creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                this.creep.moveTo(target);
+            }
+            return true;
+        }
+
+        /** Check if there are towers in need of energy **/
+        if(towers[0] != null || towers.length > 0) {
+            let target = this.creep.pos.findClosestByPath(towers);
             if(this.creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                 this.creep.moveTo(target);
             }

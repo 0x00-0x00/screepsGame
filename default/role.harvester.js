@@ -34,7 +34,7 @@ let depositEnergy = function(creep)
 
 let retrieveEnergyFromContainer = function(creep) {
     let container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s) => s.structureType == STRUCTURE_CONTAINER && s.store[RESOURCE_ENERGY] > 0
+        filter: (s) => (s.structureType == STRUCTURE_CONTAINER || s.structureType == STRUCTURE_STORAGE) && s.store[RESOURCE_ENERGY] > 0
     });
 
     /** If there arent containers or are empty  **/

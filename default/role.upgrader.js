@@ -1,4 +1,5 @@
-/** @param {Source} active sources**/
+/** @param creep Object
+ *  @param sources  Object list **/
 var quickestRoute = function(creep, sources)
 {
     /** If only one source, go to it. **/
@@ -35,7 +36,7 @@ var quickestRoute = function(creep, sources)
 
 let retrieveEnergyFromContainer = function(creep) {
     let container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s) => s.structureType == STRUCTURE_CONTAINER && s.store[RESOURCE_ENERGY] > 0
+        filter: (s) => (s.structureType == STRUCTURE_CONTAINER || s.structureType == STRUCTURE_STORAGE) && s.store[RESOURCE_ENERGY] > 0
     });
 
     /** If there arent containers or are empty  **/
@@ -55,7 +56,7 @@ let retrieveEnergyFromContainer = function(creep) {
 
 
 
-var roleUpgrader = {
+let roleUpgrader = {
 
     parts: [WORK, WORK, WORK, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY],
 

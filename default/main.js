@@ -4,7 +4,7 @@ let roleUpgrader = require('role.upgrader');
 let roleBuilder = require('role.builder');
 let roleTransporter = require('role.transporter');
 let roleAssist = require('role.assist');
-var roleWarrior = require('role.warrior');
+let roleWarrior = require('role.warrior');
 
 /** Function to get the total number of energy available through all structures present in the room.
  * @param Game Object
@@ -95,7 +95,21 @@ let planDefense = function (room) {
       return false;
   }
 
+  /** Defend the base attacking invaders with turrets **/
+  let turrets = room.find(FIND_MY_STRUCTURES, {
+      filter: (s) => s.structureType == STRUCTURE_TOWER && s.energy > 0
+  });
 
+  for(let _t in turrets) {
+      let turret = turrets[_t];
+      let nearestEnemy = turret.pos.findClosestByPath(hostiles);
+      if(turret.attack(nearestEnemy)) {
+          console.log("[+] Turret is attacking invaders!");
+      }
+  }
+
+
+  /** Issue warriors to defend the base **/
   for(let host in hostiles) {
       let hostile = hostiles[host];
 
@@ -123,10 +137,10 @@ let getWorkerBlueprint = function(room) {
 
     /** Control your room workers here **/
     if(room == "W2N5") {
-        generateCreeps(BUILDER_LIST, 5, 'Builder');
-        generateCreeps(ENERGIZER_LIST, 3, 'Energizer');
+        generateCreeps(ENERGIZER_LIST, 2, 'Energizer');
+        generateCreeps(BUILDER_LIST, 2, 'Builder');
         generateCreeps(TRANSPORTER_LIST, 3, "Transporter");
-        generateCreeps(UPGRADER_LIST, 3, 'Upgrader');
+        generateCreeps(UPGRADER_LIST, 2, 'Upgrader');
         planDefense(Game.rooms[room]);
     }
 
@@ -142,6 +156,11 @@ let differenceOfSets = function(set1, set2) {
 
 let spawnMissing = function(MASTER_LIST, creepName, spawnPoint) {
 
+
+    if(~creepName.indexOf("Energizer")) {
+        return roleAssist.spawnProcedure(MASTER_LIST, creepName, roleEnergizer.parts, spawnPoint);
+    }
+
     if(~creepName.indexOf("Harvester")) {
         return roleAssist.spawnProcedure(MASTER_LIST, creepName, roleHarvester.parts, spawnPoint);
     }
@@ -154,10 +173,6 @@ let spawnMissing = function(MASTER_LIST, creepName, spawnPoint) {
         return roleAssist.spawnProcedure(MASTER_LIST, creepName, roleUpgrader.parts, spawnPoint);
     }
 
-    if(~creepName.indexOf("Energizer")) {
-        return roleAssist.spawnProcedure(MASTER_LIST, creepName, roleEnergizer.parts, spawnPoint);
-    }
-
     if(~creepName.indexOf("Builder")) {
         return roleAssist.spawnProcedure(MASTER_LIST, creepName, roleBuilder.parts, spawnPoint);
     }
@@ -167,6 +182,47 @@ let spawnMissing = function(MASTER_LIST, creepName, spawnPoint) {
     }
 
     return true;
+};
+
+let towerRepair = function(room) {
+
+  /** Defend only if there are no threats **/
+  let hostiles = room.find(FIND_HOSTILE_CREEPS);
+  if(hostiles.length > 0) {
+      return false;
+  }
+
+  /** Wall / Rampart hitpoints **/
+  let maximumHitPoints = 100000;
+
+  let turrets = room.find(FIND_MY_STRUCTURES, {
+      filter: (s) => s.structureType == STRUCTURE_TOWER && s.energy > s.energyCapacity / 2
+  });
+
+  /** No available turrets to repairing jobs **/
+  if(turrets.length == 0) {
+      return false;
+  }
+
+
+  let damagedBuildings = room.find(FIND_STRUCTURES, {
+      filter: (s) => (s.hits < s.hitsMax / 2) && s.hits < maximumHitPoints
+  });
+
+  /** There are no damaged buildings to repair! **/
+  if(damagedBuildings[0] == null) {
+      return false;
+  }
+
+
+  for(let _t in turrets) {
+      let turret = turrets[_t];
+      if(turret.repair(damagedBuildings[0]) != OK) {
+          console.log("[!] Tower could not repair building " + damagedBuildings[0]);
+      }
+  }
+
+  return true;
 };
 
 module.exports.loop = function() {
@@ -191,6 +247,9 @@ module.exports.loop = function() {
 
         /** Calculate missing **/
         let missingWorkers = differenceOfSets(MASTER_LIST, WORKERS);
+
+        /** Remote repairing **/
+        towerRepair(Game.rooms[room_name]);
 
         /** Log information to the console **/
         console.log("Room " + room_name + " have " + WORKERS.length + "/" + MASTER_LIST.length + " workers and " + roomEnergy + " energy.");

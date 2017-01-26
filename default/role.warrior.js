@@ -1,3 +1,4 @@
+
 let roleWarrior = {
     parts: [ATTACK, ATTACK, MOVE, MOVE, MOVE, MOVE, RANGED_ATTACK, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH],
 
@@ -57,7 +58,9 @@ let roleWarrior = {
 
     run: function (creep) {
       this.creep = creep;
-      this.killBandits();
+      if(!this.killBandits()) {
+          console.log("[+] No enemies spotted in the base.");
+      }
 
     },
 };

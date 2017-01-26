@@ -21,9 +21,25 @@ let roleBuilder = {
 
     parts: [WORK, WORK, MOVE, MOVE, CARRY, CARRY],
 
+    refillTurret: function() {
+        let turrets = this.creep.room.find(FIND_MY_STRUCTURES, {
+            filter: (s) => (s.structureType == STRUCTURE_TOWER && s.energy < (s.energyCapacity - this.creep.carryCapacity * 2))
+        });
+
+        if(turrets.length == 0) {
+            return false;
+        }
+
+        let turret = this.creep.pos.findClosestByPath(turrets);
+        if(this.creep.transfer(turret, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+            this.creep.moveTo(turret);
+        }
+        return true;
+    },
+
     getEnergy: function() {
       let container = this.creep.pos.findClosestByPath(FIND_STRUCTURES, {
-          filter: (s) => s.structureType == STRUCTURE_CONTAINER && s.store[RESOURCE_ENERGY] > 0
+          filter: (s) => (s.structureType == STRUCTURE_CONTAINER || s.structureType == STRUCTURE_STORAGE) && s.store[RESOURCE_ENERGY] > this.creep.carryCapacity
       });
 
       if(this.creep.withdraw(container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
@@ -95,16 +111,28 @@ let roleBuilder = {
 
         } else {
 
-            /** Repairs first **/
-            if(this.repair()) {
-               return 0;
-            }
-
-
-            /** Building later **/
-            if(this.build()) {
+            /** Defensive structures **/
+            if(this.refillTurret()) {
                 return 0;
             }
+
+            let repairs = this.creep.room.find(FIND_STRUCTURES);
+            let repairTarget = this.creep.pos.findClosestByPath(repairs);
+            let buildings = this.creep.room.find(FIND_CONSTRUCTION_SITES);
+            let buildingTarget = this.creep.pos.findClosestByPath(buildings);
+            let repairDistance = this.creep.pos.getRangeTo(repairTarget);
+            let buildingDistance = this.creep.pos.getRangeTo(buildingTarget);
+
+            if(buildingDistance < repairDistance) {
+                this.build();
+                return 0;
+            } else {
+                if(!this.repair()) {
+                    this.build();
+                }
+                return 0;
+            }
+
         }
 
     },
