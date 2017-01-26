@@ -139,7 +139,7 @@ let getWorkerBlueprint = function(room) {
     if(room == "W2N5") {
         generateCreeps(ENERGIZER_LIST, 2, 'Energizer');
         generateCreeps(BUILDER_LIST, 2, 'Builder');
-        generateCreeps(TRANSPORTER_LIST, 3, "Transporter");
+        generateCreeps(TRANSPORTER_LIST, 1, "Transporter");
         generateCreeps(UPGRADER_LIST, 2, 'Upgrader');
         planDefense(Game.rooms[room]);
     }
@@ -230,6 +230,7 @@ module.exports.loop = function() {
     /** Iterate over controlled game rooms **/
     for(let room_name in Game.rooms) {
 
+        let roomObject = Game.rooms[room_name];
         let roomEnergy = getTotalEnergy(Game, room_name);
         let spawnPoint = Game.spawns['Spawn1'];
         let number_of_creeps = 0;
@@ -251,8 +252,12 @@ module.exports.loop = function() {
         /** Remote repairing **/
         towerRepair(Game.rooms[room_name]);
 
-        /** Log information to the console **/
-        console.log("Room " + room_name + " have " + WORKERS.length + "/" + MASTER_LIST.length + " workers and " + roomEnergy + " energy.");
+        /** Log information to the console from time to time**/
+        roomObject.memory.report_index += 1;
+        if(roomObject.memory.report_index % 16 == 0) {
+            console.log("Room " + room_name + " have " + WORKERS.length + "/" + MASTER_LIST.length + " workers and " + roomEnergy + " energy.");
+        }
+
 
         //If is okay, continue to next room
         if(missingWorkers.length == 0) {

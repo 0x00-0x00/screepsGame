@@ -21,7 +21,7 @@ let retrieveEnergyFromContainer = function(creep) {
 
     /** If there arent containers or are empty  **/
     if(container == null) {
-        console.log("Transporter error: There are no energy containers available.");
+        console.log("[!] Low demand for transporters!");
         return false;
     }
 
@@ -128,7 +128,9 @@ let roleTransporter = {
 
         /** Check if there are any containers able to receive energy**/
         if(container == null) {
-            console.log("Transporter error: No containers to store energy.");
+            this.creep.room.memory.energy_low_demand = true;
+            console.log("Low demand for transporters!");
+            //console.log("Transporter error: No containers to store energy.");
             return false;
         } else {
             //console.log("Transporter moving resources to " + container);

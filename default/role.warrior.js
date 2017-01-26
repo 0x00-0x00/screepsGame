@@ -58,8 +58,11 @@ let roleWarrior = {
 
     run: function (creep) {
       this.creep = creep;
+      this.creep.memory.report_index += 1;
       if(!this.killBandits()) {
-          console.log("[+] No enemies spotted in the base.");
+          if(this.creep.memory.report_index % 16 == 0) {
+              console.log("[+] No enemies spotted in the base.");
+          }
       }
 
     },

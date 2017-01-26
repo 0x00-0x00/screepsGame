@@ -59,6 +59,7 @@ let retrieveEnergyFromContainer = function(creep) {
 let roleUpgrader = {
 
     parts: [WORK, WORK, WORK, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY],
+    //parts: [WORK, WORK, WORK, WORK, WORK, WORK, MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY]
 
     getEnergy: function() {
 
