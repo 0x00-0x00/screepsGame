@@ -57,7 +57,7 @@ let retrierEnergyFromAll = function(creep) {
 
 
 let roleTransporter = {
-    parts: [MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY],
+    parts: [MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY],
 
     renew: function() {
         if(this.creep.ticksToLive < 100) {

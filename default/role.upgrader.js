@@ -35,22 +35,7 @@ let quickestRoute = function(creep, sources)
 };
 
 let retrieveEnergyFromContainer = function(creep) {
-    let container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s) => (s.structureType == STRUCTURE_CONTAINER || s.structureType == STRUCTURE_STORAGE) && s.store[RESOURCE_ENERGY] > 0
-    });
 
-    /** If there arent containers or are empty  **/
-    if(container == null) {
-        console.log("Upgrader error: There are no energy containers available.");
-        return false;
-    }
-
-
-    if(creep.withdraw(container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-        creep.moveTo(container);
-    }
-
-    return true;
 
 };
 
@@ -59,12 +44,42 @@ let retrieveEnergyFromContainer = function(creep) {
 let roleUpgrader = {
 
     //parts: [WORK, WORK, WORK, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY],
-    parts: [WORK, WORK, WORK, WORK, WORK, WORK, MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY],
+    parts: [WORK, WORK, WORK, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY],
+
+    retrieveEnergyFromContainer: function() {
+        if(this.creep.memory.cached_container == undefined) {
+            let container = this.creep.pos.findClosestByPath(FIND_STRUCTURES, {
+                filter: (s) => (s.structureType == STRUCTURE_CONTAINER || s.structureType == STRUCTURE_STORAGE) && s.store[RESOURCE_ENERGY] > 0
+            });
+            this.creep.memory.cached_container = container;
+        }
+
+        let container = Game.getObjectById(this.creep.memory.cached_container.id);
+        if(container.store == 0) {
+            this.creep.memory.cached_container = undefined;
+        }
+
+        /** If there arent containers or are empty  **/
+        if(container == null) {
+            console.log("Upgrader error: There are no energy containers available.");
+            return false;
+        }
+
+        if(this.creep.withdraw(container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+            this.creep.moveTo(container);
+        }
+
+        return true;
+
+    },
 
     getEnergy: function() {
 
         /** Priority 1: Container storage because it is free. **/
-        retrieveEnergyFromContainer(this.creep);
+        if(this.retrieveEnergyFromContainer()) {
+            return true;
+        }
+
 
         /** Priority 2: Dropped energy because it decay **/
         let droppedEnergy = this.creep.room.find(FIND_DROPPED_ENERGY);

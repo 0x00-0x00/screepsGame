@@ -5,22 +5,44 @@ let roleBuilder = require('role.builder');
 let roleTransporter = require('role.transporter');
 let roleAssist = require('role.assist');
 let roleWarrior = require('role.warrior');
+var roleVoyager = require('role.voyager');
 
 /** Function to get the total number of energy available through all structures present in the room.
  * @param Game Object
  * @param roomName String
  * **/
 let getTotalEnergy = function (Game, roomName) {
+    let cacheTimeout = 8;
     let totalEnergy = 0;
-    let structs = Game.rooms[roomName].find(FIND_MY_STRUCTURES, {
-        filter: (s) => s.structureType != STRUCTURE_TOWER
-    });
+    let roomObject = Game.rooms[roomName];
+    if(roomObject == null) {
+        return false;
+    }
+
+    /** Store energy storage information into cache **/
+    if(roomObject.memory.cached_structures == undefined || roomObject.memory.cache_timeout % cacheTimeout == 0) {
+        let energyStores = Game.rooms[roomName].find(FIND_MY_STRUCTURES, {
+            filter: (s) => s.structureType != STRUCTURE_TOWER && s.energy > 0
+        });
+
+        for(let i = 0; i < energyStores.length; i++) {
+            roomObject.memory.cached_structures[i] = energyStores[i].id;
+        }
+    }
+
+    let structs = [];
+    for(let i = 0; i < roomObject.memory.cached_structures.length; i++) {
+        structs[i] = Game.getObjectById(roomObject.memory.cached_structures[i]);
+    }
+
+
     for (let name in structs) {
         let structure = structs[name];
         if (structure.energy != undefined && structure.energy > 0) {
             totalEnergy += structure.energy;
         }
     }
+
     return totalEnergy;
 };
 
@@ -76,6 +98,10 @@ runCreeps = function (Game, roomName) {
             roleWarrior.run(creep);
         }
 
+        if(~name.indexOf("Voyager")) {
+            roleVoyager.run(creep);
+        }
+
     }
 
     return [number_of_creeps, WORKERS];
@@ -97,10 +123,14 @@ let planDefense = function (room) {
       return false;
   }
 
+
   /** Defend the base attacking invaders with turrets **/
   let turrets = room.find(FIND_MY_STRUCTURES, {
       filter: (s) => s.structureType == STRUCTURE_TOWER && s.energy > 0
   });
+
+
+
 
   for(let _t in turrets) {
       let turret = turrets[_t];
@@ -135,14 +165,16 @@ let getWorkerBlueprint = function(room) {
     UPGRADER_LIST = [];
     TRANSPORTER_LIST = [];
     WARRIOR_LIST = [];
-    ALL_LISTS = [BUILDER_LIST, ENERGIZER_LIST, HARVESTER_LIST, UPGRADER_LIST, TRANSPORTER_LIST, WARRIOR_LIST];
+    VOYAGER_LIST = [];
+    ALL_LISTS = [BUILDER_LIST, ENERGIZER_LIST, HARVESTER_LIST, UPGRADER_LIST, TRANSPORTER_LIST, WARRIOR_LIST, VOYAGER_LIST];
 
     /** Control your room workers here **/
     if(room == "W2N5") {
         generateCreeps(ENERGIZER_LIST, 2, 'Energizer');
-        generateCreeps(BUILDER_LIST, 2, 'Builder');
+        generateCreeps(BUILDER_LIST, 3, 'Builder');
         generateCreeps(TRANSPORTER_LIST, 2, "Transporter");
         generateCreeps(UPGRADER_LIST, 2, 'Upgrader');
+        generateCreeps(VOYAGER_LIST, 1, "Voyager");
         planDefense(Game.rooms[room]);
     }
 
@@ -183,6 +215,11 @@ let spawnMissing = function(MASTER_LIST, creepName, spawnPoint) {
         return roleAssist.spawnProcedure(MASTER_LIST, creepName, roleWarrior.parts, spawnPoint);
     }
 
+    if(~creepName.indexOf("Voyager")) {
+        return roleAssist.spawnProcedure(MASTER_LIST, creepName, roleVoyager.parts, spawnPoint);
+    }
+
+
     return true;
 };
 
@@ -195,24 +232,52 @@ let towerRepair = function(room) {
   }
 
   /** Wall / Rampart hitpoints **/
-  let maximumHitPoints = 100000;
+  let maximumHitPoints = 120000;
 
-  let turrets = room.find(FIND_MY_STRUCTURES, {
-      filter: (s) => s.structureType == STRUCTURE_TOWER && s.energy > s.energyCapacity / 2
-  });
+  /** Cache turrets id into Memory **/
+  if(room.memory.cached_turrets == null || room.memory.cache_timeout % 32 == 0) {
+      room.memory.cached_turrets = [];
+      let turrets = room.find(FIND_MY_STRUCTURES, {
+          filter: s => s.structureType == STRUCTURE_TOWER && s.energy > s.energyCapacity / 2
+      });
+      for(let i = 0; i < turrets.length; i++) {
+          room.memory.cached_turrets[i] = turrets[i].id;
+      }
+  }
+
+  let turrets = [];
+  for(let i = 0; i < room.memory.cached_turrets.length; i++) {
+      turrets[i] = Game.getObjectById(room.memory.cached_turrets[i]);
+  }
+
 
   /** No available turrets to repairing jobs **/
   if(turrets.length == 0) {
       return false;
   }
 
+  /** Store objects ID into cache **/
+  if(room.memory.cached_damagedBuildings.length == null || room.memory.cache_timeout % 32 == 0) {
+      room.memory.cached_damagedBuildings = [];
+      let damagedBuildings = room.find(FIND_STRUCTURES, {
+          filter: (s) => (s.hits < s.hitsMax / 2) && s.hits < maximumHitPoints
+      });
 
-  let damagedBuildings = room.find(FIND_STRUCTURES, {
-      filter: (s) => (s.hits < s.hitsMax / 2) && s.hits < maximumHitPoints
-  });
+      for(let i = 0; i < damagedBuildings.length; i++) {
+          room.memory.cached_damagedBuildings[i] = damagedBuildings[i].id;
+      }
+
+  }
+
+  /** Load objects using cache **/
+  let damagedBuildings = [];
+  for(let i = 0; i < room.memory.cached_damagedBuildings.length; i++) {
+      damagedBuildings[i] = Game.getObjectById(room.memory.cached_damagedBuildings[i]);
+  }
+
 
   /** There are no damaged buildings to repair! **/
-  if(damagedBuildings[0] == null) {
+  if(damagedBuildings[0] == null || damagedBuildings[0].hits > maximumHitPoints) {
       return false;
   }
 
@@ -232,10 +297,14 @@ module.exports.loop = function() {
     /** Iterate over controlled game rooms **/
     for(let room_name in Game.rooms) {
 
+        /** Define the room Object and set a Cache-timeout **/
         let roomObject = Game.rooms[room_name];
+        roomObject.memory.cache_timeout += 1;
+
         let roomEnergy = getTotalEnergy(Game, room_name);
         let spawnPoint = Game.spawns['Spawn1'];
         let number_of_creeps = 0;
+
         let MASTER_LIST = [];
         let WORKERS = [];
         let INFO_LIST = [];
@@ -246,7 +315,12 @@ module.exports.loop = function() {
 
         /** As it is and should be list **/
         WORKERS = INFO_LIST[1];
-        MASTER_LIST = getWorkerBlueprint(room_name);
+
+        /** Cache MASTER LIST into memory **/
+        if(roomObject.memory.MASTER_LIST == undefined || roomObject.memory.cache_timeout % 32 == 0) {
+            roomObject.memory.MASTER_LIST = getWorkerBlueprint(room_name);
+        }
+        MASTER_LIST = roomObject.memory.MASTER_LIST;
 
         /** Save the kingdom! **/
         if(WORKERS.length == 0) {
