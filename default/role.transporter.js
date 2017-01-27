@@ -4,7 +4,10 @@
  * **/
 let getTotalEnergy = function (Game, roomName) {
     let totalEnergy = 0;
-    let structs = Game.rooms[roomName].find(FIND_MY_STRUCTURES);
+    let structs = Game.rooms[roomName].find(FIND_MY_STRUCTURES, {
+        filter: (s) => s.structureType != STRUCTURE_TOWER
+    });
+
     for (let name in structs) {
         let structure = structs[name];
         if (structure.energy != undefined && structure.energy > 0) {
@@ -44,6 +47,7 @@ let retrierEnergyFromAll = function(creep) {
       return false;
   }
 
+  creep.say("Saving");
   if(creep.withdraw(storages, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
       creep.moveTo(storages);
   }
@@ -74,10 +78,9 @@ let roleTransporter = {
     saveSpawn: function() {
         let energyAvailable = getTotalEnergy(Game, "W2N5");
         let level = 5;
-        let minimumEnergy = 300 * level;
+        let minimumEnergy = 200 * level;
         let enemies = this.creep.room.find(FIND_HOSTILE_CREEPS);
 
-        //if(energyAvailable < minimumEnergy && enemies.length > 0) {
         if(energyAvailable < minimumEnergy) {
             retrierEnergyFromAll(this.creep);
             this.storeEnergy();
@@ -179,7 +182,7 @@ let roleTransporter = {
 
         /** The core priority is to save the spawn **/
         if(this.saveSpawn()) {
-            console.log("[+] Transpoter saving spawn");
+            return 0;
         }
 
         /** If not full of energy **/
@@ -188,6 +191,8 @@ let roleTransporter = {
         } else {
             this.storeEnergy();
         }
+
+        return 0;
 
     }
 };

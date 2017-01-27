@@ -12,7 +12,9 @@ let roleWarrior = require('role.warrior');
  * **/
 let getTotalEnergy = function (Game, roomName) {
     let totalEnergy = 0;
-    let structs = Game.rooms[roomName].find(FIND_MY_STRUCTURES);
+    let structs = Game.rooms[roomName].find(FIND_MY_STRUCTURES, {
+        filter: (s) => s.structureType != STRUCTURE_TOWER
+    });
     for (let name in structs) {
         let structure = structs[name];
         if (structure.energy != undefined && structure.energy > 0) {
