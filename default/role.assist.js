@@ -68,7 +68,6 @@ var roleAssist = {
         }
 
         if(spawnPoint.canCreateCreep(parts, worker_name) != 0) {
-            console.log("[+] Cant create the creep " + worker_name + " right now.");
             return 0;
         }
         spawnPoint.createCreep(parts, worker_name);

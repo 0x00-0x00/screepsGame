@@ -139,7 +139,7 @@ let getWorkerBlueprint = function(room) {
     if(room == "W2N5") {
         generateCreeps(ENERGIZER_LIST, 2, 'Energizer');
         generateCreeps(BUILDER_LIST, 2, 'Builder');
-        generateCreeps(TRANSPORTER_LIST, 1, "Transporter");
+        generateCreeps(TRANSPORTER_LIST, 2, "Transporter");
         generateCreeps(UPGRADER_LIST, 2, 'Upgrader');
         planDefense(Game.rooms[room]);
     }
@@ -245,6 +245,14 @@ module.exports.loop = function() {
         /** As it is and should be list **/
         WORKERS = INFO_LIST[1];
         MASTER_LIST = getWorkerBlueprint(room_name);
+
+        /** Save the kingdom! **/
+        if(WORKERS.length == 0) {
+            let minimalParts = [MOVE, MOVE, MOVE, CARRY, CARRY, CARRY];
+            if(spawnPoint.canCreateCreep(minimalParts)) {
+                spawnPoint.createCreep(minimalParts, "TransporterSavior");
+            }
+        }
 
         /** Calculate missing **/
         let missingWorkers = differenceOfSets(MASTER_LIST, WORKERS);

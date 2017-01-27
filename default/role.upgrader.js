@@ -1,6 +1,6 @@
 /** @param creep Object
  *  @param sources  Object list **/
-var quickestRoute = function(creep, sources)
+let quickestRoute = function(creep, sources)
 {
     /** If only one source, go to it. **/
     let num_sources = sources.length;
@@ -9,12 +9,12 @@ var quickestRoute = function(creep, sources)
     }
 
     /** Check distances **/
-    var distance_1 = creep.pos.getRangeTo(sources[0]);
-    var distance_2 = creep.pos.getRangeTo(sources[1]);
+    let distance_1 = creep.pos.getRangeTo(sources[0]);
+    let distance_2 = creep.pos.getRangeTo(sources[1]);
 
     /** Check energy amount of sources **/
-    var full_source_01 = sources[0].energy < sources[0].energyCapacity;
-    var full_source_02 = sources[1].energy < sources[1].energyCapacity;
+    let full_source_01 = sources[0].energy < sources[0].energyCapacity;
+    let full_source_02 = sources[1].energy < sources[1].energyCapacity;
 
     /** This ensures all sources are going to be harvested! **/
     if(full_source_01 && !full_source_02) {
@@ -58,8 +58,8 @@ let retrieveEnergyFromContainer = function(creep) {
 
 let roleUpgrader = {
 
-    parts: [WORK, WORK, WORK, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY],
-    //parts: [WORK, WORK, WORK, WORK, WORK, WORK, MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY]
+    //parts: [WORK, WORK, WORK, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY],
+    parts: [WORK, WORK, WORK, WORK, WORK, WORK, MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY],
 
     getEnergy: function() {
 

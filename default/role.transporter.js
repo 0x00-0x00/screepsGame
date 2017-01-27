@@ -21,7 +21,7 @@ let retrieveEnergyFromContainer = function(creep) {
 
     /** If there arent containers or are empty  **/
     if(container == null) {
-        console.log("[!] Low demand for transporters!");
+        //console.log("[!] Low demand for transporters!");
         return false;
     }
 
@@ -53,12 +53,28 @@ let retrierEnergyFromAll = function(creep) {
 
 
 let roleTransporter = {
-    parts: [MOVE, MOVE, CARRY, CARRY, CARRY, CARRY],
+    parts: [MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY],
+
+    renew: function() {
+        if(this.creep.ticksToLive < 100) {
+            let spawnPoints = this.creep.room.find(FIND_MY_STRUCTURES, {
+                filter: (s) => s.structureType == STRUCTURE_SPAWN
+            });
+            let nearSpawnPoint = this.creep.pos.findClosestByPath(spawnPoints);
+            if(nearSpawnPoint.renewCreep(this.creep) == ERR_NOT_IN_RANGE) {
+                this.creep.moveTo(nearSpawnPoint);
+            }
+            this.creep.say("Renewal");
+            return true;
+        }
+
+        return false;
+    },
 
     saveSpawn: function() {
         let energyAvailable = getTotalEnergy(Game, "W2N5");
         let level = 5;
-        let minimumEnergy = 200 * level;
+        let minimumEnergy = 300 * level;
         let enemies = this.creep.room.find(FIND_HOSTILE_CREEPS);
 
         //if(energyAvailable < minimumEnergy && enemies.length > 0) {
@@ -128,8 +144,7 @@ let roleTransporter = {
 
         /** Check if there are any containers able to receive energy**/
         if(container == null) {
-            this.creep.room.memory.energy_low_demand = true;
-            console.log("Low demand for transporters!");
+            //console.log("Low demand for transporters!");
             //console.log("Transporter error: No containers to store energy.");
             return false;
         } else {
@@ -147,6 +162,12 @@ let roleTransporter = {
     run: function (creep) {
 
         this.creep = creep;
+
+        /** Renewing is not worth it. **/
+        //if(this.renew()) {
+        //    return 0;
+        //}
+
         /** Define a working state **/
         if(creep.memory.working && creep.carry.energy == 0) {
             creep.memory.working = false;
