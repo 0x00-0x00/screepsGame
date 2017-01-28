@@ -1,4 +1,5 @@
 var cache = require('role.cache');
+var lo = require('lodash');
 
 let roleRemoteBuilder = {
     parts: [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, WORK, WORK, WORK],
@@ -136,7 +137,16 @@ let roleRemoteBuilder = {
             }
         } else {
             if(!this.voyage(this.destination)) {
-                this.build();
+
+                if(lo.sum(this.creep.carry) > 50) {
+                    this.build();
+                } else {
+                    let controller = this.creep.room.controller;
+                    if(this.creep.upgradeController(controller) == ERR_NOT_IN_RANGE) {
+                        this.creep.moveTo(controller, {reusePath: cache.reusePathValue});
+                    }
+                }
+
             }
         }
 
