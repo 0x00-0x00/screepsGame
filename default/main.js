@@ -174,7 +174,8 @@ let getWorkerBlueprint = function(room) {
     WARRIOR_LIST = [];
     VOYAGER_LIST = [];
     CONQUEROR_LIST = [];
-    ALL_LISTS = [BUILDER_LIST, ENERGIZER_LIST, HARVESTER_LIST, UPGRADER_LIST, TRANSPORTER_LIST, WARRIOR_LIST, VOYAGER_LIST, CONQUEROR_LIST];
+    REMOTEB_LIST = [];
+    ALL_LISTS = [BUILDER_LIST, ENERGIZER_LIST, HARVESTER_LIST, UPGRADER_LIST, TRANSPORTER_LIST, WARRIOR_LIST, VOYAGER_LIST, CONQUEROR_LIST, REMOTEB_LIST];
 
     /** Control your room workers here **/
     if(room == "W2N5") {
@@ -182,7 +183,8 @@ let getWorkerBlueprint = function(room) {
         generateCreeps(BUILDER_LIST, 1, 'Builder');
         generateCreeps(TRANSPORTER_LIST, 2, "Transporter");
         generateCreeps(UPGRADER_LIST, 2, 'Upgrader');
-        generateCreeps(VOYAGER_LIST, 1, "Voyager");
+        //generateCreeps(VOYAGER_LIST, 1, "Voyager");
+        generateCreeps(REMOTEB_LIST, 1, "RemoteBuild");
         planDefense(Game.rooms[room]);
     }
 
@@ -200,31 +202,35 @@ let spawnMissing = function(MASTER_LIST, creepName, spawnPoint) {
 
 
     if(~creepName.indexOf("Energizer")) {
-        return roleAssist.spawnProcedure(MASTER_LIST, creepName, roleEnergizer.parts, spawnPoint);
+        return roleAssist.spawnProcedure(MASTER_LIST, creepName, "energizer", roleEnergizer.parts, spawnPoint);
     }
 
     if(~creepName.indexOf("Harvester")) {
-        return roleAssist.spawnProcedure(MASTER_LIST, creepName, roleHarvester.parts, spawnPoint);
+        return roleAssist.spawnProcedure(MASTER_LIST, creepName, "harvester", roleHarvester.parts, spawnPoint);
     }
 
     if(~creepName.indexOf("Transporter")) {
-        return roleAssist.spawnProcedure(MASTER_LIST, creepName, roleTransporter.parts, spawnPoint);
+        return roleAssist.spawnProcedure(MASTER_LIST, creepName, "transporter", roleTransporter.parts, spawnPoint);
     }
 
     if(~creepName.indexOf("Upgrader")) {
-        return roleAssist.spawnProcedure(MASTER_LIST, creepName, roleUpgrader.parts, spawnPoint);
+        return roleAssist.spawnProcedure(MASTER_LIST, creepName, "upgrader", roleUpgrader.parts, spawnPoint);
     }
 
     if(~creepName.indexOf("Builder")) {
-        return roleAssist.spawnProcedure(MASTER_LIST, creepName, roleBuilder.parts, spawnPoint);
+        return roleAssist.spawnProcedure(MASTER_LIST, creepName, "builder", roleBuilder.parts, spawnPoint);
     }
 
     if(~creepName.indexOf("Warrior")) {
-        return roleAssist.spawnProcedure(MASTER_LIST, creepName, roleWarrior.parts, spawnPoint);
+        return roleAssist.spawnProcedure(MASTER_LIST, creepName, "warrior", roleWarrior.parts, spawnPoint);
     }
 
     if(~creepName.indexOf("Voyager")) {
-        return roleAssist.spawnProcedure(MASTER_LIST, creepName, roleVoyager.parts, spawnPoint);
+        return roleAssist.spawnProcedure(MASTER_LIST, creepName, "voyager", roleVoyager.parts, spawnPoint);
+    }
+
+    if(~creepName.indexOf("RemoteBuild")) {
+        return roleAssist.spawnProcedure(MASTER_LIST, creepName, "remote builder", roleRemoteBuilder.parts, spawnPoint);
     }
 
 
