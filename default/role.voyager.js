@@ -16,7 +16,8 @@ let roleVoyager = {
     voyage: function(room_name) {
         if(this.creep.room.name != room_name) {
             this.creep.say("Travel!");
-            this.creep.moveTo(this.creep.pos.findClosestByPath(this.creep.room.findExitTo(room_name)), {reusePath: cache.reusePathValue});
+            let target = this.creep.pos.findClosestByPath(this.creep.room.findExitTo(room_name));
+            this.creep.moveTo(target, {reusePath: cache.reusePathValue});
             return true;
         }
         return false;

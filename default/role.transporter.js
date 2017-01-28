@@ -26,7 +26,12 @@ let retrieveEnergyFromContainer = function(creep) {
         let container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
             filter: (s) => s.structureType == STRUCTURE_CONTAINER && s.store[RESOURCE_ENERGY] > 0
         });
-        creep.memory.container = container.id;
+        if(container == null) {
+            creep.memory.container = null;
+        } else {
+            creep.memory.container = container.id;
+        }
+
     }
 
     let container = Game.getObjectById(creep.memory.container);
@@ -76,13 +81,18 @@ let roleTransporter = {
             let turrets = this.creep.room.find(FIND_MY_STRUCTURES, {
                 filter: (s) => (s.structureType == STRUCTURE_TOWER && s.energy < (s.energyCapacity - this.creep.carryCapacity))
             });
-            this.creep.memory.turrets = cache.storeObjects(turrets);
+            if(turrets = null) {
+                this.creep.memory.turrets = null;
+            } else {
+                this.creep.memory.turrets = cache.storeObjects(turrets);
+            }
+
         }
 
         let turrets = cache.retrieveObjects(this.creep.memory.turrets);
 
 
-        if(turrets.length == 0) {
+        if(turrets.length == 0 || turrets == null) {
             return false;
         }
 
@@ -141,7 +151,11 @@ let roleTransporter = {
         let dropped_energies = cache.retrieveObjects(this.creep.memory.dropped_energies);
         if(this.creep.memory.target == undefined || this.creep.room.memory.cache_timeout % 8 == 0) {
             let target = this.creep.pos.findClosestByPath(dropped_energies);
-            this.creep.memory.target = target.id;
+            if(target == null) {
+                this.creep.memory.target = null;
+            } else {
+                this.creep.memory.target = target.id;
+            }
         }
 
         let target = Game.getObjectById(this.creep.memory.target);

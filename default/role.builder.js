@@ -20,7 +20,7 @@ let checkRepair = function(struct)
 
 let roleBuilder = {
 
-    parts: [WORK, WORK, MOVE, MOVE, CARRY, CARRY],
+    parts: [WORK, WORK, CARRY, CARRY, MOVE, MOVE],
 
     refillTurret: function() {
         let turrets = this.creep.room.find(FIND_MY_STRUCTURES, {
@@ -53,8 +53,19 @@ let roleBuilder = {
         /** Static variables **/
         let maximumHits = 100000;
 
-        let my_structures = this.creep.room.find(FIND_MY_STRUCTURES);
-        let structures = this.creep.room.find(FIND_STRUCTURES);
+        if(this.creep.memory.my_structures == undefined || this.creep.room.memory.cache_timeout % 64 == 0) {
+            let my_structures = this.creep.room.find(FIND_MY_STRUCTURES);
+            this.creep.memory.my_structures = cache.storeObjects(my_structures);
+        }
+        let my_structures = cache.retrieveObjects(this.creep.memory.my_structures);
+
+        if(this.creep.memory.structures == undefined || this.creep.room.memory.cache_timeout % 64 == 0) {
+            let structures = this.creep.room.find(FIND_STRUCTURES);
+            this.creep.memory.structures = cache.storeObjects(structures);
+        }
+        let structures = cache.retrieveObjects(this.creep.memory.structures);
+
+        /** Join them **/
         let repair_strutures = my_structures.concat(structures);
 
         for(let i in repair_strutures) {
@@ -80,7 +91,14 @@ let roleBuilder = {
     },
 
     build: function() {
-      let construction_sites = this.creep.room.find(FIND_CONSTRUCTION_SITES);
+
+      if(this.creep.memory.construction_sites == undefined || this.creep.room.memory.cache_timeout % 64 == 0) {
+          let construction_sites = this.creep.room.find(FIND_CONSTRUCTION_SITES);
+          this.creep.memory.construction_sites = cache.storeObjects(construction_sites);
+      }
+      let construction_sites = cache.retrieveObjects(this.creep.memory.construction_sites);
+
+
       if(construction_sites.length > 0) {
           let target = this.creep.pos.findClosestByPath(construction_sites);
           if(this.creep.build(target) == ERR_NOT_IN_RANGE) {
@@ -112,29 +130,10 @@ let roleBuilder = {
 
         } else {
 
-            /** Defensive structures **/
-            //if(this.refillTurret()) {
-            //    return 0;
-            //}
-
-            let repairs = this.creep.room.find(FIND_STRUCTURES);
-            let repairTarget = this.creep.pos.findClosestByPath(repairs);
-
-            let buildings = this.creep.room.find(FIND_CONSTRUCTION_SITES);
-            let buildingTarget = this.creep.pos.findClosestByPath(buildings);
-
-            let repairDistance = this.creep.pos.getRangeTo(repairTarget);
-            let buildingDistance = this.creep.pos.getRangeTo(buildingTarget);
-
-            if(buildingDistance < repairDistance) {
+            if(!this.repair()) {
                 this.build();
-                return 0;
-            } else {
-                if(!this.repair()) {
-                    this.build();
-                }
-                return 0;
             }
+
 
         }
 

@@ -1,3 +1,4 @@
+let cache = require('role.cache');
 let roleEnergizer = require('role.energizer');
 let roleHarvester = require('role.harvester');
 let roleUpgrader = require('role.upgrader');
@@ -5,7 +6,9 @@ let roleBuilder = require('role.builder');
 let roleTransporter = require('role.transporter');
 let roleAssist = require('role.assist');
 let roleWarrior = require('role.warrior');
-var roleVoyager = require('role.voyager');
+let roleVoyager = require('role.voyager');
+let roleConqueror = require('role.conqueror');
+var roleRemoteBuilder = require('role.remote.builder');
 
 /** Function to get the total number of energy available through all structures present in the room.
  * @param Game Object
@@ -24,17 +27,10 @@ let getTotalEnergy = function (Game, roomName) {
         let energyStores = Game.rooms[roomName].find(FIND_MY_STRUCTURES, {
             filter: (s) => s.structureType != STRUCTURE_TOWER && s.energy > 0
         });
-
-        for(let i = 0; i < energyStores.length; i++) {
-            roomObject.memory.cached_structures[i] = energyStores[i].id;
-        }
+        roomObject.memory.cached_structures = cache.storeObjects(energyStores);
     }
 
-    let structs = [];
-    for(let i = 0; i < roomObject.memory.cached_structures.length; i++) {
-        structs[i] = Game.getObjectById(roomObject.memory.cached_structures[i]);
-    }
-
+    let structs = cache.retrieveObjects(roomObject.memory.cached_structures);
 
     for (let name in structs) {
         let structure = structs[name];
@@ -105,6 +101,14 @@ runCreeps = function (Game, roomName) {
             roleVoyager.run(creep);
         }
 
+        if(~name.indexOf("Conqueror")) {
+            roleConqueror.run(creep);
+        }
+
+        if(~name.indexOf("RemoteBuild")) {
+            roleRemoteBuilder.run(creep);
+        }
+
     }
 
     return [number_of_creeps, WORKERS];
@@ -169,12 +173,13 @@ let getWorkerBlueprint = function(room) {
     TRANSPORTER_LIST = [];
     WARRIOR_LIST = [];
     VOYAGER_LIST = [];
-    ALL_LISTS = [BUILDER_LIST, ENERGIZER_LIST, HARVESTER_LIST, UPGRADER_LIST, TRANSPORTER_LIST, WARRIOR_LIST, VOYAGER_LIST];
+    CONQUEROR_LIST = [];
+    ALL_LISTS = [BUILDER_LIST, ENERGIZER_LIST, HARVESTER_LIST, UPGRADER_LIST, TRANSPORTER_LIST, WARRIOR_LIST, VOYAGER_LIST, CONQUEROR_LIST];
 
     /** Control your room workers here **/
     if(room == "W2N5") {
         generateCreeps(ENERGIZER_LIST, 2, 'Energizer');
-        generateCreeps(BUILDER_LIST, 2, 'Builder');
+        generateCreeps(BUILDER_LIST, 1, 'Builder');
         generateCreeps(TRANSPORTER_LIST, 2, "Transporter");
         generateCreeps(UPGRADER_LIST, 2, 'Upgrader');
         generateCreeps(VOYAGER_LIST, 1, "Voyager");
@@ -297,6 +302,7 @@ let towerRepair = function(room) {
 
 module.exports.loop = function() {
 
+    Memory.report_index += 1;
     /** Iterate over controlled game rooms **/
     for(let room_name in Game.rooms) {
 
@@ -360,6 +366,12 @@ module.exports.loop = function() {
         }
 
     }
+
+
+    if(Memory.report_index % 16 == 0) {
+        console.log("CPU Bucket: " + Game.cpu.bucket);
+    }
+
 
 
 

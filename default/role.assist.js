@@ -77,6 +77,7 @@ var roleAssist = {
         /** createCreep returns string if successful **/
         if(lo.isString(spawnPoint.createCreep(parts, worker_name))) {
             console.log("[+] Spawned a creep named " + worker_name);
+            Game.creeps[worker_name].memory.source_room = roomObject.name;
             return 0;
         } else {
             return -1;
