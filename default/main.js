@@ -71,7 +71,10 @@ runCreeps = function (Game, roomName) {
     for (let name in Game.creeps) {
         let creep = Game.creeps[name];
         WORKERS[number_of_creeps] = name;
-        number_of_creeps++;
+        if(creep.room.name == roomName) {
+            number_of_creeps++;
+        }
+
 
         /** Run based on classes **/
         if (~name.indexOf("Transporter")) {
@@ -171,7 +174,7 @@ let getWorkerBlueprint = function(room) {
     /** Control your room workers here **/
     if(room == "W2N5") {
         generateCreeps(ENERGIZER_LIST, 2, 'Energizer');
-        generateCreeps(BUILDER_LIST, 3, 'Builder');
+        generateCreeps(BUILDER_LIST, 2, 'Builder');
         generateCreeps(TRANSPORTER_LIST, 2, "Transporter");
         generateCreeps(UPGRADER_LIST, 2, 'Upgrader');
         generateCreeps(VOYAGER_LIST, 1, "Voyager");
@@ -225,6 +228,7 @@ let spawnMissing = function(MASTER_LIST, creepName, spawnPoint) {
 
 let towerRepair = function(room) {
 
+  let cacheTimeout = 8;
   /** Defend only if there are no threats **/
   let hostiles = room.find(FIND_HOSTILE_CREEPS);
   if(hostiles.length > 0) {
@@ -257,7 +261,7 @@ let towerRepair = function(room) {
   }
 
   /** Store objects ID into cache **/
-  if(room.memory.cached_damagedBuildings.length == null || room.memory.cache_timeout % 32 == 0) {
+  if(room.memory.cached_damagedBuildings.length == null || room.memory.cache_timeout % cacheTimeout == 0) {
       room.memory.cached_damagedBuildings = [];
       let damagedBuildings = room.find(FIND_STRUCTURES, {
           filter: (s) => (s.hits < s.hitsMax / 2) && s.hits < maximumHitPoints
@@ -274,7 +278,6 @@ let towerRepair = function(room) {
   for(let i = 0; i < room.memory.cached_damagedBuildings.length; i++) {
       damagedBuildings[i] = Game.getObjectById(room.memory.cached_damagedBuildings[i]);
   }
-
 
   /** There are no damaged buildings to repair! **/
   if(damagedBuildings[0] == null || damagedBuildings[0].hits > maximumHitPoints) {
@@ -317,7 +320,7 @@ module.exports.loop = function() {
         WORKERS = INFO_LIST[1];
 
         /** Cache MASTER LIST into memory **/
-        if(roomObject.memory.MASTER_LIST == undefined || roomObject.memory.cache_timeout % 32 == 0) {
+        if(roomObject.memory.MASTER_LIST == undefined || roomObject.memory.cache_timeout % 2 == 0) {
             roomObject.memory.MASTER_LIST = getWorkerBlueprint(room_name);
         }
         MASTER_LIST = roomObject.memory.MASTER_LIST;

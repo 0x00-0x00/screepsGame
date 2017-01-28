@@ -1,3 +1,4 @@
+var cache = require('role.cache');
 
 /** @param {Array} array **/
 Array.min = function( array )
@@ -32,7 +33,7 @@ let roleBuilder = {
 
         let turret = this.creep.pos.findClosestByPath(turrets);
         if(this.creep.transfer(turret, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-            this.creep.moveTo(turret);
+            this.creep.moveTo(turret, {reusePath: cache.reusePathValue});
         }
         return true;
     },
@@ -43,7 +44,7 @@ let roleBuilder = {
       });
 
       if(this.creep.withdraw(container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-          this.creep.moveTo(container);
+          this.creep.moveTo(container, {reusePath: cache.reusePathValue});
       }
 
     },
@@ -69,7 +70,7 @@ let roleBuilder = {
 
             if(checkRepair(repair_struct)) {
                 if(this.creep.repair(repair_struct) == ERR_NOT_IN_RANGE) {
-                    this.creep.moveTo(repair_struct);
+                    this.creep.moveTo(repair_struct, {reusePath: cache.reusePathValue});
                 }
                 return true;
             }
@@ -83,7 +84,7 @@ let roleBuilder = {
       if(construction_sites.length > 0) {
           let target = this.creep.pos.findClosestByPath(construction_sites);
           if(this.creep.build(target) == ERR_NOT_IN_RANGE) {
-              this.creep.moveTo(target);
+              this.creep.moveTo(target, {reusePath: cache.reusePathValue});
           }
           return true;
       } else {
@@ -112,14 +113,16 @@ let roleBuilder = {
         } else {
 
             /** Defensive structures **/
-            if(this.refillTurret()) {
-                return 0;
-            }
+            //if(this.refillTurret()) {
+            //    return 0;
+            //}
 
             let repairs = this.creep.room.find(FIND_STRUCTURES);
             let repairTarget = this.creep.pos.findClosestByPath(repairs);
+
             let buildings = this.creep.room.find(FIND_CONSTRUCTION_SITES);
             let buildingTarget = this.creep.pos.findClosestByPath(buildings);
+
             let repairDistance = this.creep.pos.getRangeTo(repairTarget);
             let buildingDistance = this.creep.pos.getRangeTo(buildingTarget);
 

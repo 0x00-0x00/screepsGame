@@ -1,4 +1,5 @@
 var lo = require('lodash');
+var cache = require('role.cache');
 
 /** Function to get the total number of energy available through all structures present in the room.
  * @param Game Object
@@ -20,58 +21,35 @@ let getTotalEnergy = function (Game, roomName) {
 };
 
 let retrieveEnergyFromContainer = function(creep) {
-    let container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s) => s.structureType == STRUCTURE_CONTAINER && s.store[RESOURCE_ENERGY] > 0
-    });
+
+    if(creep.memory.container == undefined || creep.room.memory.cache_timeout % 8 == 0) {
+        let container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+            filter: (s) => s.structureType == STRUCTURE_CONTAINER && s.store[RESOURCE_ENERGY] > 0
+        });
+        creep.memory.container = container.id;
+    }
+
+    let container = Game.getObjectById(creep.memory.container);
+
+    /** As of cache, maybe the cached object has not energy any more. So, we check it. **/
+
 
     /** If there arent containers or are empty  **/
-    if(container == null) {
-        //console.log("[!] Low demand for transporters!");
+    if(container == null || container == "") {
+        console.log("[!] Low demand for transporters!");
         return false;
     }
-
 
     if(creep.withdraw(container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-        creep.moveTo(container);
+        creep.moveTo(container, {reusePath: cache.reusePathValue});
     }
 
     return true;
 
 };
 
-let retrieveCacheValue = function(cacheVariable, listOfObjects) {
-    listOfObjects = [];
 
-    if(cacheVariable == undefined) {
-        return false;
-    }
-
-    for (let _ in cacheVariable) {
-        listOfObjects[_] = Game.getObjectById(cacheVariable[_]);
-    }
-    return true;
-
-};
-
-let storeCacheValue = function (cacheVariable, listOfObjects) {
-    cacheVariable = [];
-
-    if(listOfObjects == undefined) {
-        return false;
-    }
-
-    for (let _ in listOfObjects) {
-        let cachedObject = listOfObjects[_];
-        cacheVariable[_] = cachedObject.id;
-    }
-
-    return true;
-
-
-
-};
-
-let retrierEnergyFromAll = function(creep) {
+let retrieveEnergyFromAll = function(creep) {
   let storages = creep.pos.findClosestByPath(FIND_STRUCTURES, {
       filter: (s) => (s.structureType == STRUCTURE_CONTAINER || s.structureType == STRUCTURE_STORAGE) && (s.store[RESOURCE_ENERGY] > 0)
   });
@@ -91,18 +69,30 @@ let retrierEnergyFromAll = function(creep) {
 
 
 let roleTransporter = {
-    parts: [MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY],
+    parts: [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE],
 
     refillTurret: function() {
-        let turrets = this.creep.room.find(FIND_MY_STRUCTURES, {
-            filter: (s) => (s.structureType == STRUCTURE_TOWER && s.energy < (s.energyCapacity - this.creep.carryCapacity))
-        });
+        if(this.creep.memory.turrets == undefined || this.creep.room.memory.cache_timeout % 32 == 0) {
+            let turrets = this.creep.room.find(FIND_MY_STRUCTURES, {
+                filter: (s) => (s.structureType == STRUCTURE_TOWER && s.energy < (s.energyCapacity - this.creep.carryCapacity))
+            });
+            this.creep.memory.turrets = cache.storeObjects(turrets);
+        }
+
+        let turrets = cache.retrieveObjects(this.creep.memory.turrets);
+
 
         if(turrets.length == 0) {
             return false;
         }
 
         let turret = this.creep.pos.findClosestByPath(turrets);
+
+        /** In case the creep have resources **/
+        if(this.creep.carry[RESOURCE_ENERGY] < 1) {
+            return false;
+        }
+
         if(this.creep.transfer(turret, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
             this.creep.moveTo(turret);
         }
@@ -133,7 +123,7 @@ let roleTransporter = {
         let enemies = this.creep.room.find(FIND_HOSTILE_CREEPS);
 
         if(energyAvailable < minimumEnergy) {
-            retrierEnergyFromAll(this.creep);
+            retrieveEnergyFromAll(this.creep);
             this.storeEnergy();
             return true;
         } else {
@@ -142,11 +132,23 @@ let roleTransporter = {
     },
 
     pickEnergy: function() {
-        let dropped_energies = this.creep.room.find(FIND_DROPPED_ENERGY);
-        let target = this.creep.pos.findClosestByPath(dropped_energies);
+
+        /** Store dropped energies location ID's into cache **/
+        if(this.creep.memory.dropped_energies == undefined || this.creep.room.memory.cache_timeout % 8 == 0) {
+            this.creep.memory.dropped_energies = cache.storeObjects(this.creep.room.find(FIND_DROPPED_ENERGY));
+        }
+
+        let dropped_energies = cache.retrieveObjects(this.creep.memory.dropped_energies);
+        if(this.creep.memory.target == undefined || this.creep.room.memory.cache_timeout % 8 == 0) {
+            let target = this.creep.pos.findClosestByPath(dropped_energies);
+            this.creep.memory.target = target.id;
+        }
+
+        let target = Game.getObjectById(this.creep.memory.target);
+
 
         /** Check if there is dropped energy on the ground **/
-        if(target == null) {
+        if(target == null || target == "") {
             retrieveEnergyFromContainer(this.creep);
             return true;
         }
@@ -170,7 +172,7 @@ let roleTransporter = {
 
         let container = this.creep.pos.findClosestByPath(FIND_STRUCTURES, {
             filter: (s) => (s.structureType == STRUCTURE_STORAGE && s.store[RESOURCE_ENERGY] < s.storeCapacity)
-        , reusePath: 50});
+        });
 
         let towers = this.creep.room.find(FIND_MY_STRUCTURES, {
             filter: (s) => (s.energy < (s.energyCapacity - this.creep.carryCapacity)) && s.structureType == STRUCTURE_TOWER
@@ -180,27 +182,33 @@ let roleTransporter = {
         if(structs[0] != null || structs.length > 0) {
             let target = this.creep.pos.findClosestByPath(structs);
             if(this.creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                this.creep.moveTo(target);
+                this.creep.moveTo(target, {reusePath: 50});
             }
             return true;
         }
 
+
         /** Check if there are towers in need of energy **/
-        if(towers[0] != null || towers.length > 0) {
+        if((towers[0] != null || towers.length > 0) && this.creep.carry[RESOURCE_ENERGY] > 0) {
             let target = this.creep.pos.findClosestByPath(towers);
             if(this.creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                this.creep.moveTo(target);
+                this.creep.moveTo(target, {reusePath: 50});
             }
             return true;
         }
+
 
         /** Check if there are any containers able to receive energy**/
         if(container == null) {
             return false;
         } else {
-            if(this.creep.transfer(container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                this.creep.moveTo(container);
+            for(let _ in this.creep.carry) {
+                if(this.creep.transfer(container, _) == ERR_NOT_IN_RANGE) {
+                    this.creep.moveTo(container, {reusePath: 50});
+                    break;
+                }
             }
+
             return true;
         }
 
@@ -218,7 +226,7 @@ let roleTransporter = {
         //}
 
         /** Define a working state **/
-        if(creep.memory.working && creep.carry.energy == 0) {
+        if(creep.memory.working && lo.sum(creep.carry) == 0) {
             creep.memory.working = false;
         }
 

@@ -1,3 +1,4 @@
+var lo = require('lodash');
 
 var roleAssist = {
     /** Function to calculate how much energy a creep costs **/
@@ -46,10 +47,11 @@ var roleAssist = {
     {
         let cost = this.calculate_creep_cost(parts);
         let total_energy = 0;
+        let roomObject = spawnPoint.room;
 
-        let structures = Game.rooms['W2N5'].find(FIND_MY_STRUCTURES);
+        let structures = roomObject.find(FIND_MY_STRUCTURES);
         for(let name in structures) {
-            var target = structures[name];
+            let target = structures[name];
             if(target.energy != undefined && target.energy > 0) {
                 total_energy += target.energy;
             }
@@ -67,13 +69,20 @@ var roleAssist = {
             return -1;
         }
 
+        /** Check if creation is possible **/
         if(spawnPoint.canCreateCreep(parts, worker_name) != 0) {
             return 0;
         }
-        spawnPoint.createCreep(parts, worker_name);
-        //Game.creeps[worker_name].memory.role = role;
-        console.log("[+] Spawned a creep named " + worker_name);
-        return 0;
+
+        /** createCreep returns string if successful **/
+        if(lo.isString(spawnPoint.createCreep(parts, worker_name))) {
+            console.log("[+] Spawned a creep named " + worker_name);
+            return 0;
+        } else {
+            return -1;
+        }
+
+
     }
 }
 

@@ -1,20 +1,22 @@
+var cache = require('role.cache');
+
 let roleVoyager = {
     //parts: [WORK, MOVE, CARRY],
-    parts: [WORK, WORK, WORK, MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY],
+    parts: [WORK, WORK, WORK, WORK, MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY],
 
     coming_from: "W2N5",
     destination: "W3N5",
 
     harvest: function (target) {
         if(this.creep.harvest(target) == ERR_NOT_IN_RANGE) {
-            this.creep.moveTo(target);
+            this.creep.moveTo(target, {reusePath: cache.reusePathValue});
         }
     },
 
     voyage: function(room_name) {
         if(this.creep.room.name != room_name) {
             this.creep.say("Travel!");
-            this.creep.moveTo(this.creep.pos.findClosestByPath(this.creep.room.findExitTo(room_name)));
+            this.creep.moveTo(this.creep.pos.findClosestByPath(this.creep.room.findExitTo(room_name)), {reusePath: cache.reusePathValue});
             return true;
         }
         return false;
@@ -31,7 +33,7 @@ let roleVoyager = {
 
       /** Store it !**/
       if(this.creep.transfer(storage[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-          this.creep.moveTo(storage[0]);
+          this.creep.moveTo(storage[0], {reusePath: cache.reusePathValue});
       }
 
       return true;

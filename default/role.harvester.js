@@ -1,3 +1,5 @@
+var cache = require('role.cache');
+
 /**
  * Created by shemhazai on 1/21/17.
  */

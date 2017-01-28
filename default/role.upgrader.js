@@ -1,3 +1,5 @@
+var cache = require('role.cache');
+
 /** @param creep Object
  *  @param sources  Object list **/
 let quickestRoute = function(creep, sources)
@@ -66,7 +68,7 @@ let roleUpgrader = {
         }
 
         if(this.creep.withdraw(container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-            this.creep.moveTo(container);
+            this.creep.moveTo(container, {reusePath: cache.reusePathValue});
         }
 
         return true;
@@ -86,7 +88,7 @@ let roleUpgrader = {
         if(droppedEnergy.length > 0) {
             let nearest = this.creep.pos.findClosestByPath(droppedEnergy);
             if(this.creep.pickup(nearest) == ERR_NOT_IN_RANGE) {
-                this.creep.moveTo(nearest);
+                this.creep.moveTo(nearest, {reusePath: cache.reusePathValue});
             }
             return true;
         }
@@ -96,7 +98,7 @@ let roleUpgrader = {
         let energySources = this.creep.room.find(FIND_SOURCES_ACTIVE);
         let nearest = this.creep.pos.findClosestByPath(energySources);
         if(this.creep.harvest(nearest) == ERR_NOT_IN_RANGE) {
-            this.creep.moveTo(nearest);
+            this.creep.moveTo(nearest, {reusePath: cache.reusePathValue});
         }
 
 
@@ -122,7 +124,7 @@ let roleUpgrader = {
         } else {
             var target = creep.room.controller;
             if(creep.upgradeController(target) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(target);
+                creep.moveTo(target, {reusePath: cache.reusePathValue});
             }
         }
     }
