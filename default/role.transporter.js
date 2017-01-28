@@ -41,7 +41,10 @@ let retrieveEnergyFromContainer = function(creep) {
 
     /** If there arent containers or are empty  **/
     if(container == null || container == "") {
-        console.log("[!] Low demand for transporters!");
+        if(creep.memory.report_index % 8 == 0) {
+            console.log("[!] Low demand for transporters!");
+        }
+        creep.memory.report_index += 1;
         return false;
     }
 
