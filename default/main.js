@@ -183,7 +183,7 @@ let getWorkerBlueprint = function(room) {
         generateCreeps(BUILDER_LIST, 1, 'Builder');
         generateCreeps(TRANSPORTER_LIST, 2, "Transporter");
         generateCreeps(UPGRADER_LIST, 2, 'Upgrader');
-        //generateCreeps(VOYAGER_LIST, 1, "Voyager");
+        generateCreeps(VOYAGER_LIST, 1, "Voyager");
         generateCreeps(REMOTEB_LIST, 1, "RemoteBuild");
         planDefense(Game.rooms[room]);
     }
