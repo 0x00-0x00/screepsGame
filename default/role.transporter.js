@@ -1,3 +1,5 @@
+var lo = require('lodash');
+
 /** Function to get the total number of energy available through all structures present in the room.
  * @param Game Object
  * @param roomName String
@@ -37,6 +39,38 @@ let retrieveEnergyFromContainer = function(creep) {
 
 };
 
+let retrieveCacheValue = function(cacheVariable, listOfObjects) {
+    listOfObjects = [];
+
+    if(cacheVariable == undefined) {
+        return false;
+    }
+
+    for (let _ in cacheVariable) {
+        listOfObjects[_] = Game.getObjectById(cacheVariable[_]);
+    }
+    return true;
+
+};
+
+let storeCacheValue = function (cacheVariable, listOfObjects) {
+    cacheVariable = [];
+
+    if(listOfObjects == undefined) {
+        return false;
+    }
+
+    for (let _ in listOfObjects) {
+        let cachedObject = listOfObjects[_];
+        cacheVariable[_] = cachedObject.id;
+    }
+
+    return true;
+
+
+
+};
+
 let retrierEnergyFromAll = function(creep) {
   let storages = creep.pos.findClosestByPath(FIND_STRUCTURES, {
       filter: (s) => (s.structureType == STRUCTURE_CONTAINER || s.structureType == STRUCTURE_STORAGE) && (s.store[RESOURCE_ENERGY] > 0)
@@ -58,6 +92,23 @@ let retrierEnergyFromAll = function(creep) {
 
 let roleTransporter = {
     parts: [MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY],
+
+    refillTurret: function() {
+        let turrets = this.creep.room.find(FIND_MY_STRUCTURES, {
+            filter: (s) => (s.structureType == STRUCTURE_TOWER && s.energy < (s.energyCapacity - this.creep.carryCapacity))
+        });
+
+        if(turrets.length == 0) {
+            return false;
+        }
+
+        let turret = this.creep.pos.findClosestByPath(turrets);
+        if(this.creep.transfer(turret, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+            this.creep.moveTo(turret);
+        }
+        return true;
+    },
+
 
     renew: function() {
         if(this.creep.ticksToLive < 100) {
@@ -112,7 +163,6 @@ let roleTransporter = {
             filter:  (s) => (s.energy < s.energyCapacity) && s.structureType != STRUCTURE_TOWER
         });
 
-
         /** This is used when you dont have a freaking huge STORAGE and do not want to use the containers as energy dropping boxes
          * let container = this.creep.pos.findClosestByPath(FIND_STRUCTURES, {
             filter: (s) => (s.structureType == STRUCTURE_CONTAINER || s.structureType == STRUCTURE_STORAGE) && s.store[RESOURCE_ENERGY] < s.storeCapacity
@@ -120,7 +170,7 @@ let roleTransporter = {
 
         let container = this.creep.pos.findClosestByPath(FIND_STRUCTURES, {
             filter: (s) => (s.structureType == STRUCTURE_STORAGE && s.store[RESOURCE_ENERGY] < s.storeCapacity)
-        });
+        , reusePath: 50});
 
         let towers = this.creep.room.find(FIND_MY_STRUCTURES, {
             filter: (s) => (s.energy < (s.energyCapacity - this.creep.carryCapacity)) && s.structureType == STRUCTURE_TOWER
@@ -129,7 +179,6 @@ let roleTransporter = {
         /** Check if there are extensions/spawns with storage capacity **/
         if(structs[0] != null || structs.length > 0) {
             let target = this.creep.pos.findClosestByPath(structs);
-            //console.log("Transporter moving resources to " + target);
             if(this.creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                 this.creep.moveTo(target);
             }
@@ -147,11 +196,8 @@ let roleTransporter = {
 
         /** Check if there are any containers able to receive energy**/
         if(container == null) {
-            //console.log("Low demand for transporters!");
-            //console.log("Transporter error: No containers to store energy.");
             return false;
         } else {
-            //console.log("Transporter moving resources to " + container);
             if(this.creep.transfer(container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                 this.creep.moveTo(container);
             }
@@ -176,7 +222,7 @@ let roleTransporter = {
             creep.memory.working = false;
         }
 
-        if(!creep.memory.working && creep.carry.energy == creep.carryCapacity) {
+        if(!creep.memory.working && lo.sum(creep.carry) == creep.carryCapacity) {
             creep.memory.working = true;
         }
 
@@ -185,11 +231,13 @@ let roleTransporter = {
             return 0;
         }
 
+
         /** If not full of energy **/
         if( !creep.memory.working ) {
             this.pickEnergy();
         } else {
             this.storeEnergy();
+
         }
 
         return 0;
