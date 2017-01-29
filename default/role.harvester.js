@@ -86,9 +86,9 @@ let buildConstructions = function(creep, totalEnergy, minimumCost) {
     if(constructs.length > 0 && (totalEnergy > minimumCost)) {
         let target = creep.pos.findClosestByPath(constructs);
         if(creep.build(target) == ERR_NOT_IN_RANGE) {
-            creep.moveTo(target);
+            creep.moveTo(target, {reusePath: 15});
         } else {
-            creep.say("Building")
+            creep.say("Building");
         }
         return true;
 
@@ -239,13 +239,22 @@ let roleHarvester = {
               return 0;
           }
 
-          /** Construction code **/
-          //if(buildConstructions(creep, totalEnergy, minimumCost)) {
-          //    return 0;
 
-          //}
+          if(this.creep.room.controller.ticksToDowngrade > 4000 && !this.creep.memory.controller_dying) {
+              /** Construction code **/
+              if(buildConstructions(creep, totalEnergy, minimumCost)) {
+                  return 0;
+              }
+              return 0;
+          } else {
+              this.creep.memory.controller_dying = true;
+          }
+
 
           if(this.upgrade()) {
+              if(this.creep.room.controller.ticksToDowngrade > 4900) {
+                  this.creep.memory.controller_dying = false;
+              }
               return 0;
           }
       }
