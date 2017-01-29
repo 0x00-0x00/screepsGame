@@ -13,14 +13,22 @@ let roleRemoteBuilder = {
         if(this.creep.room.name != roomName) {
             this.creep.say("Travel!");
             let target = this.creep.pos.findClosestByPath(this.creep.room.findExitTo(roomName));
-            this.creep.moveTo(target, {reusePath: cache.reusePathValue});
+            this.creep.moveTo(target);
             return true;
+        }
+
+
+        if(this.creep.pos.y == 0) {
+            this.creep.moveTo(this.creep.pos.x, this.creep.pos.y + 1);
+        }
+        if(this.creep.pos.y == 49) {
+            this.creep.moveTo(this.creep.pos.x, this.creep.pos.y - 1);
         }
         return false;
     },
 
     build: function() {
-        if(this.creep.memory.structures == undefined || this.creep.room.memory.cache_timeout % 32 == 0) {
+        if(this.creep.memory.structures == undefined || this.creep.room.memory.cache_timeout % 4 == 0) {
             let constructions = this.creep.room.find(FIND_CONSTRUCTION_SITES);
             if(constructions.length < 1) {
                 this.creep.memory.structures = null;
@@ -34,7 +42,7 @@ let roleRemoteBuilder = {
             this.creep.say("No constructions!");
             return false;
         }
-        if(this.creep.memory.targetBuilding == undefined || this.creep.room.memory.cache_timeout % 32 == 0) {
+        if(this.creep.memory.targetBuilding == undefined || this.creep.room.memory.cache_timeout % 4 == 0) {
             let target = this.creep.pos.findClosestByPath(constructions);
             if(target == null) {
                 this.creep.memory.targetBuilding = null;
@@ -96,7 +104,7 @@ let roleRemoteBuilder = {
     },
 
     getEnergy: function() {
-        if(this.creep.memory.container == undefined || this.creep.room.memory.cache_timeout % 32 == 0) {
+        if(this.creep.memory.container == undefined || this.creep.room.memory.cache_timeout % 8 == 0) {
             let container = this.creep.pos.findClosestByPath(FIND_STRUCTURES, {
                 filter: (s) => (s.structureType == STRUCTURE_CONTAINER || s.structureType == STRUCTURE_STORAGE) && s.store[RESOURCE_ENERGY] > this.creep.carryCapacity
             });
@@ -114,43 +122,36 @@ let roleRemoteBuilder = {
         }
 
         if(this.creep.withdraw(container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-            this.creep.moveTo(container, {reusePath: cache.reusePathValue});
+            this.creep.moveTo(container, {reusePath: 15});
         }
-
+        return true;
     },
 
 
 
     run: function(creep) {
         this.creep = creep;
-        if(creep.memory.working && creep.carry.energy == 0) {
+        if(creep.memory.working && lo.sum(creep.carry) == 0) {
             creep.memory.working = false;
         }
 
-        if(!creep.memory.working && creep.carry.energy == creep.carryCapacity) {
+        if(!creep.memory.working && lo.sum(creep.carry) == creep.carryCapacity) {
             creep.memory.working = true;
         }
+
 
         if(!creep.memory.working) {
             if(!this.voyage(this.source_room)) {
                 this.getEnergy();
+                return 0;
             }
         } else {
             if(!this.voyage(this.destination)) {
-
-                if(lo.sum(this.creep.carry) > 50) {
-                    this.build();
-                } else {
-                    let controller = this.creep.room.controller;
-                    if(this.creep.upgradeController(controller) == ERR_NOT_IN_RANGE) {
-                        this.creep.moveTo(controller, {reusePath: cache.reusePathValue});
-                    }
-                }
-
+                this.build();
+                return 0;
             }
+
         }
-
-
     },
 
 };
