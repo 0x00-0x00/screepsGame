@@ -188,6 +188,10 @@ let getWorkerBlueprint = function(room) {
         planDefense(Game.rooms[room]);
     }
 
+    if(room == "W2N4") {
+        generateCreeps(HARVESTER_LIST, 4, "Harvester");
+    }
+
     /** Another room working blueprint here **/
     return concatenateLists(ALL_LISTS);
 
@@ -247,7 +251,7 @@ let towerRepair = function(room) {
   }
 
   /** Wall / Rampart hitpoints **/
-  let maximumHitPoints = 120000;
+  let maximumHitPoints = 200000;
 
   /** Cache turrets id into Memory **/
   if(room.memory.cached_turrets == null || room.memory.cache_timeout % 32 == 0) {
@@ -317,7 +321,20 @@ module.exports.loop = function() {
         roomObject.memory.cache_timeout += 1;
 
         let roomEnergy = getTotalEnergy(Game, room_name);
-        let spawnPoint = Game.spawns['Spawn1'];
+        if(roomObject.memory.spawnPoints == undefined || roomObject.memory.cache_timeout % 64 == 0) {
+            let spawnPoints = Game.rooms[room_name].find(FIND_MY_STRUCTURES, {
+                filter: (s) => s.structureType == STRUCTURE_SPAWN
+            });
+            roomObject.memory.spawnPoints = cache.storeObjects(spawnPoints);
+        }
+
+        let spawnPoints = cache.retrieveObjects(roomObject.memory.spawnPoints);
+
+        if(spawnPoints.length == 0 || spawnPoints == undefined) {
+            break;
+        }
+
+        let spawnPoint = spawnPoints[0];
         let number_of_creeps = 0;
 
         let MASTER_LIST = [];
