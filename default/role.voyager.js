@@ -2,7 +2,7 @@ var cache = require('role.cache');
 
 let roleVoyager = {
     //parts: [WORK, MOVE, CARRY],
-    parts: [WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE,],
+    parts: [WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
 
     coming_from: "W2N5",
     destination: "W3N5",
