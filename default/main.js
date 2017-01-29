@@ -251,7 +251,14 @@ let towerRepair = function(room) {
   }
 
   /** Wall / Rampart hitpoints **/
-  let maximumHitPoints = 200000;
+  if(room.name == "W2N5") {
+      let maximumHitPoints = 200000;
+  }
+
+  if(room.name == "W2N4") {
+      let maximumHitPoints = 1000;
+  }
+
 
   /** Cache turrets id into Memory **/
   if(room.memory.cached_turrets == null || room.memory.cache_timeout % 32 == 0) {
