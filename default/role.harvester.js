@@ -1,5 +1,5 @@
 var cache = require('role.cache');
-
+var lo = require('lodash');
 /**
  * Created by shemhazai on 1/21/17.
  */
@@ -16,22 +16,26 @@ Array.max = function( array ) {
 let depositEnergy = function(creep)
 {
 
+    let structs = creep.room.find(FIND_MY_STRUCTURES, {
+        filter: (s) => s.energy < s.energyCapacity
+    });
 
-    if(creep.carry.energy < creep.energyCapacity) {
-        console.log("Idle sequence.");
+    if(structs.length == 0) {
+        creep.memory.full_energy = 1;
+        return false;
+    } else {
+        creep.memory.full_energy = 0;
     }
 
-    let structs = creep.room.find(FIND_MY_STRUCTURES);
-
-  for(let x in structs) {
-      let structure = structs[x];
-      if(structure.energyCapacity > structure.energy) {
-          if(creep.transfer(structure, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-              creep.moveTo(structure);
-          }
-          return true;
-      }
-  }
+    for(let x in structs) {
+        let structure = structs[x];
+        if(structure.energyCapacity > structure.energy) {
+            if(creep.transfer(structure, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                creep.moveTo(structure, {reusePath: cache.reusePathValue});
+            }
+            return true;
+        }
+    }
 };
 
 let retrieveEnergyFromContainer = function(creep) {
@@ -138,27 +142,20 @@ let goTo = function (creep, target) {
     }
 };
 
-/**  *
- * @param struct
- */
-let checkRepair = function (struct) {
-    if (struct.hits < struct.hitsMax / 2) {
-        return true;
-    } else {
-        return false;
-    }
-};
-
 /** @param creep **/
 let repairProcedure = function (creep) {
-    let repairs = creep.room.find(FIND_STRUCTURES);
-    for (let i in repairs) {
+    let repairs = creep.room.find(FIND_STRUCTURES, {
+        filter: (s) => s.hits < s.hitsMax / 2
+    });
+
+    if(repairs.length == 0) {
+        return false;
+    }
+
+    for(let i in repairs) {
         let target = repairs[i];
-        if (checkRepair(target)) {
-            if (creep.repair(target) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(target);
-            }
-            console.log("Repairs needed on :" + target);
+        if (creep.repair(target) == ERR_NOT_IN_RANGE) {
+            creep.moveTo(target, {reusePath: cache.reusePathValue});
             return true;
         }
     }
@@ -174,20 +171,53 @@ let roleHarvester = {
     parts: [WORK, MOVE, MOVE, CARRY, CARRY],
 
     getEnergy: function() {
-      retrieveEnergyFromContainer(this.creep);
+      //etrieveEnergyFromContainer(this.creep);
+        let sources = this.creep.room.find(FIND_SOURCES_ACTIVE);
+        if(sources.length < 1) {
+            console.log("[!] There is no eligible source to harvest.");
+            return false;
+        }
+        let source = sources[0];
+
+        if(this.creep.harvest(source) == ERR_NOT_IN_RANGE) {
+            this.creep.moveTo(source, {reusePath: 15});
+        }
+        return true;
+
+    },
+
+    upgrade: function() {
+        let spawnPoint = Game.spawns['Spawn2'];
+        if(spawnPoint.energy < spawnPoint.energyCapacity) {
+            return false;
+        }
+
+        if (this.creep.upgradeController(this.creep.room.controller) == ERR_NOT_IN_RANGE) {
+            this.creep.moveTo(this.creep.room.controller, {reusePath: 15});
+        }
+        return true;
+    },
+
+    drop: function() {
+        if(this.creep.memory.full_energy == 1) {
+            this.creep.drop(RESOURCE_ENERGY, this.creep.carry.energy);
+            return true;
+        } else {
+            return false;
+        }
 
     },
 
     run: function(creep, totalEnergy, minimumCost)
     {
-
+        this.creep = creep;
 
       /** Define a working state **/
       if(creep.memory.working && creep.carry.energy == 0) {
           creep.memory.working = false;
       }
 
-      if(!creep.memory.working && creep.carry.energy == creep.carryCapacity) {
+      if(!creep.memory.working && lo.sum(creep.carry) == creep.carryCapacity) {
           creep.memory.working = true;
       }
 
@@ -200,27 +230,24 @@ let roleHarvester = {
 
       } else {
 
+          if(depositEnergy(creep)) {
+              return 0;
+          }
+
           /** Code giving priority to repairing procedures **/
           if(repairProcedure(creep)) {
               return 0;
           }
 
           /** Construction code **/
-          if(buildConstructions(creep, totalEnergy, minimumCost)) {
+          //if(buildConstructions(creep, totalEnergy, minimumCost)) {
+          //    return 0;
+
+          //}
+
+          if(this.upgrade()) {
               return 0;
-
           }
-
-          /** If nothing above, deposit energy. **/
-          if(depositEnergy(creep)) {
-              return 0;
-          }
-
-
-
-          /** To drop the energy instead of returning it. **/
-          //creep.drop(RESOURCE_ENERGY, creep.carry.energy);
-
       }
     }
 
