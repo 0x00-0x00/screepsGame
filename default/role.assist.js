@@ -43,7 +43,7 @@ var roleAssist = {
         return cost;
     },
 
-    spawnProcedure: function(worker_list, worker_name, parts, spawnPoint)
+    spawnProcedure: function(worker_list, worker_name, role, parts, spawnPoint)
     {
         let cost = this.calculate_creep_cost(parts);
         let total_energy = 0;
@@ -78,6 +78,7 @@ var roleAssist = {
         if(lo.isString(spawnPoint.createCreep(parts, worker_name))) {
             console.log("[+] Spawned a creep named " + worker_name);
             Game.creeps[worker_name].memory.source_room = roomObject.name;
+            Game.creeps[worker_name].memory.role = role;
             return 0;
         } else {
             return -1;
