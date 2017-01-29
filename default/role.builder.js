@@ -43,6 +43,7 @@ let roleBuilder = {
           filter: (s) => (s.structureType == STRUCTURE_CONTAINER || s.structureType == STRUCTURE_STORAGE) && s.store[RESOURCE_ENERGY] > this.creep.carryCapacity
       });
 
+
       if(this.creep.withdraw(container, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
           this.creep.moveTo(container, {reusePath: cache.reusePathValue});
       }
@@ -91,13 +92,11 @@ let roleBuilder = {
     },
 
     build: function() {
-
-      if(this.creep.memory.construction_sites == undefined || this.creep.room.memory.cache_timeout % 64 == 0) {
+      if(this.creep.memory.construction_sites == undefined || this.creep.room.memory.cache_timeout % 8 == 0) {
           let construction_sites = this.creep.room.find(FIND_CONSTRUCTION_SITES);
           this.creep.memory.construction_sites = cache.storeObjects(construction_sites);
       }
       let construction_sites = cache.retrieveObjects(this.creep.memory.construction_sites);
-
 
       if(construction_sites.length > 0) {
           let target = this.creep.pos.findClosestByPath(construction_sites);
